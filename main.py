@@ -2,8 +2,13 @@ import cv2
 import Binarization as binarization
 from commonfunctions import *
 from skimage import exposure
+from fix_orientation import fix_orientation
 
 originalImage = cv2.imread('Images/music2.png',cv2.IMREAD_GRAYSCALE)
+
+# Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
+fixed_orientation = fix_orientation(originalImage)
+show_images([originalImage, fixed_orientation], ['Original Image', 'Fixed Orientation'])
 
 # Binarization Step
 
