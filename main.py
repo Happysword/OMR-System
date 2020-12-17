@@ -6,10 +6,6 @@ from fix_orientation import fix_orientation
 
 originalImage = cv2.imread('Images/music2.png',cv2.IMREAD_GRAYSCALE)
 
-# Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-fixed_orientation = fix_orientation(originalImage)
-show_images([originalImage, fixed_orientation], ['Original Image', 'Fixed Orientation'])
-
 # Binarization Step
 
 thre1 = binarization.AdaptiveThresholding(originalImage,0,21) # sometimes make holes in the note
@@ -19,6 +15,11 @@ thre4 = binarization.AdaptiveThresholding(originalImage,3,21) # give good result
 thre5 = binarization.GlobalThresholding(originalImage)
 
 show_images([thre1,thre2,thre3,thre4,thre5],['ADAPTIVE_MEAN','ADAPTIVE_GAUSSIAN','niblack','sauvola','Otsu'])
+
+# Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
+fixed_orientation = fix_orientation(thre4)
+show_images([thre4, fixed_orientation], ['Threshold Image', 'Fixed Orientation'])
+
 
 # titles = ['ADAPTIVE_MEAN','ADAPTIVE_GAUSSIAN','niblack','sauvola','Otsu']
 # images = [thre1, thre2, thre3, thre4, thre5]

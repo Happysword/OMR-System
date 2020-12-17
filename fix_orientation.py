@@ -4,35 +4,31 @@ import math
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
+# Assuming we get a binary image
 def fix_orientation(img: np.ndarray) -> np.ndarray:
     if img.dtype == np.bool:
         img = img.astype(np.uint8) * 255
 
-    cropped_borders = __crop_borders(img)
-    (height, width) = cropped_borders.shape
-    binary_image = __binarize_with_canny(cropped_borders)
+    img = cv2.bitwise_not(img)
+    img = __crop_borders(img)
+    angle = __get_rotation_angle(img)
 
-    angle = __get_rotation_angle(binary_image)
+    img_rotated = __rotate_image(img, angle)
+    x1, y1, x2, y2 = __get_cropping_rectangle(img_rotated)
+    img_rotated = img_rotated[y1:y2, x1:x2]
 
-    binary_rotated = __rotate_image(binary_image, angle)
-    transformation_matrix = get_perspective_transformation_matrix(binary_rotated)
-    binary_perspective = cv2.warpPerspective(binary_rotated, transformation_matrix,
-                                             (width, height), borderMode=cv2.BORDER_REPLICATE)
-
-    img_rotated = __rotate_image(cropped_borders, angle)
+    transformation_matrix = get_perspective_transformation_matrix(img_rotated)
     img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix,
-                                          (width, height), borderMode=cv2.BORDER_REPLICATE)
+                                          (x2 - x1, y2 - y1), borderMode=cv2.BORDER_REPLICATE)
 
-    x1, y1, x2, y2 = __get_cropping_rectangle(binary_perspective)
-    return img_perspective[y1:y2, x1:x2]
+    return cv2.bitwise_not(img_perspective)
 
 
 def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
     (height, width) = img.shape[:2]
     center = (width // 2, height // 2)
     rotation_matrix = cv2.getRotationMatrix2D(center, angle_in_degrees, scale=1)
-    return cv2.warpAffine(img, rotation_matrix, (width, height), borderMode=cv2.BORDER_REPLICATE)
-    # return cv2.warpAffine(img, rotation_matrix, (width, height), borderValue=0)
+    return cv2.warpAffine(img, rotation_matrix, (width, height), borderValue=0)
 
 
 def __crop_borders(img: np.ndarray, percentage: float = 0.01) -> np.ndarray:
@@ -55,12 +51,11 @@ def __get_line_angle(line):
     return math.degrees(math.atan2(y, x))
 
 
-def __get_bounding_lines(hull_points) -> np.ndarray:
+def __get_bounding_lines(hull_points) -> list:
     hull_points = np.append(hull_points, [hull_points[0]], axis=0)
 
     lines = [[hull_points[0], hull_points[1]]]
     old_angle = __get_line_angle(lines[0])
-
     for i in range(2, len(hull_points)):
         line = [hull_points[i - 1], hull_points[i]]
         new_angle = abs(__get_line_angle(line))
@@ -71,29 +66,33 @@ def __get_bounding_lines(hull_points) -> np.ndarray:
         old_angle = abs(__get_line_angle(lines[-1]))
 
     lines.sort(key=__get_line_length, reverse=True)
-    return __sort_boundary_lines(lines[0:4])
+    return lines[0:4]
 
 
-# Sort boundary lines to be : left, top, right, bottom
+# Return Top-Left , Top-Right , Bottom-Right , Bottom-Left boundary boundary points
+# They are used for perspective fixing, therefore we use only left and right lines to get points
 # Left have min sum of x , right have max sum of x
 # Top have min sum of y , Bottom have max sum of y
-def __sort_boundary_lines(boundary_lines: list):
+def __get_boundary_points(boundary_lines: list) -> np.ndarray:
     boundary_lines = np.array(boundary_lines)
     sum: np.ndarray = boundary_lines.sum(axis=1)
     sum = sum.reshape((4, 2))
 
     min_x_index = np.argmin(sum, axis=0)[0]
-    min_y_index = np.argmin(sum, axis=0)[1]
     max_x_index = np.argmax(sum, axis=0)[0]
-    max_y_index = np.argmax(sum, axis=0)[1]
 
-    rect = np.zeros_like(boundary_lines)
-    rect[0] = boundary_lines[min_x_index]
-    rect[1] = boundary_lines[min_y_index]
-    rect[2] = boundary_lines[max_x_index]
-    rect[3] = boundary_lines[max_y_index]
+    left = boundary_lines[min_x_index].reshape((2, 2))
+    right = boundary_lines[max_x_index].reshape((2, 2))
 
-    return rect
+    left_sum = np.sum(left, axis=1)
+    right_sum = np.sum(right, axis=1)
+
+    top_left = left[np.argmin(left_sum, axis=0)]
+    bottom_left = left[np.argmax(left_sum, axis=0)]
+    top_right = right[np.argmin(right_sum, axis=0)]
+    bottom_right = right[np.argmax(right_sum, axis=0)]
+
+    return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.float32)
 
 
 # Line is defined by s (starting point) , e (ending point)
@@ -120,60 +119,30 @@ def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
     bounding_lines = __get_bounding_lines(hull_points)
-
-    intersection_points = np.zeros((4, 2), dtype=np.float32)
-    for i, line in enumerate(bounding_lines):
-        next_line = bounding_lines[(i + 1) % len(bounding_lines)]
-        intersection = __get_intersection(line, next_line)
-        intersection_points[i] = intersection
+    bounding_points = __get_boundary_points(bounding_lines)
 
     x, y, w, h = cv2.boundingRect(hull_points)
 
     rectangle_points = np.float32([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
-
-    transformation_matrix = cv2.getPerspectiveTransform(intersection_points, rectangle_points)
+    transformation_matrix = cv2.getPerspectiveTransform(bounding_points, rectangle_points)
     return transformation_matrix
 
 
 def __get_cropping_rectangle(binary_image: np.ndarray):
     x_fix = binary_image.shape[1] // 25
     y_fix = binary_image.shape[0] // 25
+    binary_image = cv2.medianBlur(binary_image, 9)
     all_points = cv2.findNonZero(binary_image)
     x, y, w, h = cv2.boundingRect(all_points)
     return (x - x_fix), (y - y_fix), (x + x_fix + w), (y + y_fix + h)
 
 
-def __get_hough_lines(binary_image: np.ndarray):
-    rho = 1  # distance resolution in pixels of the Hough grid
-    theta = np.pi / 180  # angular resolution in radians of the Hough grid
-    threshold = max(binary_image.shape[0],
-                    binary_image.shape[1]) // 5  # minimum number of votes (intersections in Hough grid cell)
-    min_line_length = 2 * max(binary_image.shape[0], binary_image.shape[1]) // 3
-    max_line_gap = min_line_length / 10  # maximum gap in pixels between connectable line segments
-    lines = cv2.HoughLinesP(binary_image, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
-    return lines
+def __get_rotation_angle(binary_image: np.ndarray):
+    img = cv2.medianBlur(binary_image, 9)
+    all_points = cv2.findNonZero(img)
+    center, (width, height), angle = cv2.minAreaRect(all_points)
 
+    if width < height:
+        angle += 90
 
-def __get_rotation_angle(binarized_image: np.ndarray):
-    lines_endpoints = __get_hough_lines(binarized_image)
-
-    data_type = [('length', float), ('angle', float)]
-    lines_properties = np.zeros(len(lines_endpoints), dtype=data_type)
-
-    for i, line in enumerate(lines_endpoints):
-        lines_properties[i]['length'] = __get_line_length(line)
-        lines_properties[i]['angle'] = __get_line_angle(line)
-
-    lines_properties[::-1].sort(order='length')  # sort in descending order according to length field
-    return np.average(lines_properties[0:5]['angle'])
-
-
-def __binarize_with_canny(img: np.ndarray):
-    img = cv2.GaussianBlur(img, (5, 5), 0)
-    img = cv2.medianBlur(img, 3)
-
-    low_threshold = 70
-    high_threshold = 150
-    edges = cv2.Canny(img, low_threshold, high_threshold)
-
-    return cv2.dilate(edges, (9, 9))
+    return angle
