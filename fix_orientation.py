@@ -55,20 +55,20 @@ def __get_line_angle(line):
     return math.degrees(math.atan2(y, x))
 
 
-def get_bounding_lines(hull_points) -> np.ndarray:
-    np.append(hull_points, [hull_points[0]], axis=0)
+def __get_bounding_lines(hull_points) -> np.ndarray:
+    hull_points = np.append(hull_points, [hull_points[0]], axis=0)
 
     lines = [[hull_points[0], hull_points[1]]]
     old_angle = __get_line_angle(lines[0])
 
     for i in range(2, len(hull_points)):
         line = [hull_points[i - 1], hull_points[i]]
-        new_angle = __get_line_angle(line)
+        new_angle = abs(__get_line_angle(line))
         if abs(old_angle - new_angle) <= 15:
             lines[-1][1] = hull_points[i]
         else:
             lines.append(line)
-        old_angle = __get_line_angle(lines[-1])
+        old_angle = abs(__get_line_angle(lines[-1]))
 
     lines.sort(key=__get_line_length, reverse=True)
     return __sort_boundary_lines(lines[0:4])
@@ -119,7 +119,7 @@ def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
-    bounding_lines = get_bounding_lines(hull_points)
+    bounding_lines = __get_bounding_lines(hull_points)
 
     intersection_points = np.zeros((4, 2), dtype=np.float32)
     for i, line in enumerate(bounding_lines):
