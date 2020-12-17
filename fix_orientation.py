@@ -14,12 +14,11 @@ def fix_orientation(img: np.ndarray) -> np.ndarray:
     angle = __get_rotation_angle(img)
 
     img_rotated = __rotate_image(img, angle)
-    x1, y1, x2, y2 = __get_cropping_rectangle(img_rotated)
-    img_rotated = img_rotated[y1:y2, x1:x2]
+    img_rotated = __crop_image(img_rotated)
+    (height, width) = img_rotated.shape
 
     transformation_matrix = get_perspective_transformation_matrix(img_rotated)
-    img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix,
-                                          (x2 - x1, y2 - y1), borderMode=cv2.BORDER_REPLICATE)
+    img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix, (width, height))
 
     return cv2.bitwise_not(img_perspective)
 
@@ -128,13 +127,14 @@ def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     return transformation_matrix
 
 
-def __get_cropping_rectangle(binary_image: np.ndarray):
-    x_fix = binary_image.shape[1] // 25
-    y_fix = binary_image.shape[0] // 25
-    binary_image = cv2.medianBlur(binary_image, 9)
-    all_points = cv2.findNonZero(binary_image)
+def __crop_image(binary_image: np.ndarray):
+    blurred = cv2.medianBlur(binary_image, 9)
+    all_points = cv2.findNonZero(blurred)
     x, y, w, h = cv2.boundingRect(all_points)
-    return (x - x_fix), (y - y_fix), (x + x_fix + w), (y + y_fix + h)
+    binary_image = binary_image[y: (y + h), x:(x + w)]
+    border_x = binary_image.shape[1] // 10
+    border_y = binary_image.shape[0] // 5
+    return cv2.copyMakeBorder(binary_image, border_y, border_y, border_x, border_x, cv2.BORDER_CONSTANT, value=0)
 
 
 def __get_rotation_angle(binary_image: np.ndarray):
