@@ -13,7 +13,7 @@ class Staff:
         self.__get_staff_lines()
         self.__get_staff_notes()
         self.__get_staff_thickness()
-        self.__get_staff_positions()
+        # self.__get_staff_positions()
 
     def __get_staff_lines(self):
         img = np.uint8(self.image)
@@ -83,9 +83,11 @@ class Staff:
                     count = 1
             rle_in.append(count)
             if len(rle_in) > 9:
+                print(np.array(rle_in))
                 rle.append(np.array(rle_in))
         rle = np.array(rle)
 
+        # print(rle)
         rle_avg = np.int32(np.round(rle.sum(axis = 0) / rle.shape[0]))
         positions = np.cumsum(rle_avg)
         self.positions = positions[1:-1:2] - (self.thickness // 2 ) - 1

@@ -7,7 +7,7 @@ import cv2
 from skimage.transform import hough_line, hough_line_peaks
 import itertools 
 
-img = cv2.imread('./Images/music3.PNG')
+img = cv2.imread('./Images/music0.PNG')
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 #invert the image
 gray_inv = cv2.bitwise_not(gray)
@@ -52,4 +52,4 @@ erosion = cv2.erode(gray_inv_binarized,kernel,iterations = 1)
 dilate = cv2.dilate(erosion,kernel,iterations = 1)
 
 
-show_images([img,dilate])
+show_images([img,erosion])

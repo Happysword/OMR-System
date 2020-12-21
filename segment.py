@@ -15,8 +15,8 @@ def segment_staff(img):
 
     #Calculate the Horizontal histogram 
     hist_hor = np.sum(dilated_img,axis=1)
-    plt.plot(hist_hor)
-    plt.show()
+    # plt.plot(hist_hor)
+    # plt.show()
 
     #Calculate the threshold of Segmentation
     sorted_hist_hor = sorted(hist_hor)
@@ -60,9 +60,9 @@ def segment_symbols(img, width = 16, height = 32):
 
 
 ### Test of segment_staff
-img = cv.imread("Images\music1.png",0)
-c_array = segment_staff(img)
-show_images(c_array)
+# img = cv.imread("Images\music3.png",0)
+# c_array = segment_staff(img)
+# show_images(c_array)
 
 #### Test of segment_symbols
 # img = cv.imread("Images\segtest.png",0)
