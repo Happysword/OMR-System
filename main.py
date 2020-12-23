@@ -6,7 +6,7 @@ from fix_orientation import fix_orientation
 from staff import *
 from segment import *
 
-originalImage = cv2.imread('Images/note2.png',cv2.IMREAD_GRAYSCALE)
+originalImage = cv2.imread('Images/music1.png',cv2.IMREAD_GRAYSCALE)
 
 # Binarization Step
 
