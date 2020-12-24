@@ -2,54 +2,74 @@ import skimage
 from commonfunctions import *
 import numpy as np
 import os
-import Binarization as binarization
 import cv2
 from skimage.transform import hough_line, hough_line_peaks
 import itertools 
+from skimage.measure import find_contours
+from statistics import mean
 
-img = cv2.imread('./Images/music0.PNG')
-gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-#invert the image
-gray_inv = cv2.bitwise_not(gray)
-gray_inv_binarized = cv2.adaptiveThreshold(gray_inv, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, -2)
+lineNames = ['c','d','e','f','g','a','b','c2','d2','e2','f2','g2','a2','b2']
 
-gray_inv_binarized = np.copy(gray_inv_binarized)
+# NOTE: Should get rid of cliff to avoid false notes
+# TODO: find a way to detect hollow notes
 
-#Get the lines alone to measure space between lines (should get all staff info from other class)
-horizontal = np.copy(gray_inv_binarized)
-vertical = np.copy(gray_inv_binarized)
+# Returns the coordinates of note and array of the note names
+def NotesPositions(thresholdedImg,linesPos,space):
+    invertedImg = 1 - thresholdedImg
+    invertedImg = np.uint8(invertedImg)
 
-cols = horizontal.shape[1]
-horizontal_size = cols // 30
+    # Creating circle SE with size of the note circle
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
+    erosion = cv2.erode(invertedImg,kernel,iterations = 1)
+    
+    show_images([thresholdedImg,erosion])
 
-horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
+    notePoints = _getPoints(erosion)
+    linesDic = dict()
+    linesDic = _linesNames(linesPos,space)
 
-horizontal = cv2.erode(horizontal, horizontalStructure)
-horizontal = cv2.dilate(horizontal, horizontalStructure)
+    notePoints = sorted(notePoints, key=lambda x: x[0])
 
-#Apply RLE to get space height (should get all staff info from other class)
-rle = list()
-for y in range(0,horizontal.shape[1]):
-    count = 1
-    n = 0
-    rle_in = list()
-    for x in range(1,horizontal.shape[0]):
-        if(horizontal[x][y] == horizontal[x-1][y]):
-            count+=1
-        else :
-            rle_in.append(count)
-            count = 1
-    rle_in.append(count)
-    rle.append(np.array(rle_in))
-rle = np.array(rle)
+    notesNames = []
+    for point in notePoints:
+       minimum = min(linesDic, key=lambda x:abs(x-point[1]))
+       notesNames.append(linesDic[minimum])
 
-rle = sorted(rle, key=len)
-spaceWidth = rle[-5][2]
+    return notePoints,notesNames
 
-# Creating circle SE with size of note circle (still can't detect hallow circle) 
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(spaceWidth*0.9),int(spaceWidth*0.9)))    
-erosion = cv2.erode(gray_inv_binarized,kernel,iterations = 1)
-dilate = cv2.dilate(erosion,kernel,iterations = 1)
+# Retruns dic of [lines y pos - names]
+def _linesNames(linesPos,space):
+    linesPos = list(linesPos)
+    linesPos = sorted(linesPos,reverse=True)
+    
+    lowerExtraLine = linesPos[0] + space
+    upperExtraLine = linesPos[-1] - space
+
+    linesPos.insert(0,lowerExtraLine)
+    linesPos.append(upperExtraLine)
+
+    linesDic = dict()
+
+    i = 0
+    for pos in linesPos:
+        linesDic[pos] = lineNames[i]
+        linesDic[int(pos - (space/2))] = lineNames[i+1]
+        i+=2
+    return linesDic
 
 
-show_images([img,erosion])
+# Returns set of points from countours in image
+def _getPoints(img):
+        points = []
+        contours = find_contours(img, 0.8)
+        for c in contours:
+            xValues = np.round(c[:, 1]).astype(int)
+            yValues = np.round(c[:, 0]).astype(int)
+
+            point = []
+            point.append( mean(xValues) )
+            point.append( mean(yValues) )
+
+            points.append(point)
+                
+        return points
