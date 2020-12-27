@@ -7,14 +7,14 @@ from staff import *
 from segment import *
 from NotesDetection import *
 
-originalImage = cv2.imread('Images/music0.png',cv2.IMREAD_GRAYSCALE)
+originalImage = cv2.imread('Images/music3.png',cv2.IMREAD_GRAYSCALE)
 
 # Binarization Step
 
 thre4 = binarization.AdaptiveThresholding(originalImage,3,21) # give good results
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-# fixed_orientation = fix_orientation(thre4)
+fixed_orientation = fix_orientation(thre4)
 # show_images([fixed_orientation])
 
 segmented_staffs_array = segment_staff(thre4*255)
