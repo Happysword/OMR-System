@@ -17,7 +17,7 @@ thre4 = binarization.AdaptiveThresholding(originalImage,3,21) # give good result
 # fixed_orientation = fix_orientation(thre4)
 # show_images([fixed_orientation])
 
-segmented_staffs_array = segment_staff(thre4)
+segmented_staffs_array = segment_staff(thre4*255)
 
 # Getting Staff features
 
@@ -29,14 +29,13 @@ for i in Staffs:
 
 symbols = []      
 for staff in Staffs:
-    symbols = symbols + segment_symbols(staff.notes)
+    temp = segment_symbols(staff.notes)
+    symbols = symbols + temp
+    show_images(temp)
     # print(segment_symbols(staff.notes))
     # print(staff.positions)
     # notePoints,notesNames = NotesPositions(thre4,staff.positions,staff.space)
     # print(notesNames)
 
-for i in symbols:
-    cv.imshow("Image",i)
-    cv.waitKey(0)
 
 
