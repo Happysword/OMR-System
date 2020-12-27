@@ -47,19 +47,21 @@ class Staff:
         
         img_inv = 1 - img
 
-        vertical = np.uint8(np.copy(img_inv))
-        
-        # Specify size on vertical axis
-        rows = vertical.shape[0]
-        # print(rows)
-        verticalsize = rows // 8
+        vertical = np.uint8((img_inv - self.lines)*255) 
+        show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
 
-        # Create structure element for extracting vertical lines through morphology operations
-        verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
 
-        # Apply morphology operations
-        vertical = cv2.erode(vertical, verticalStructure)
-        vertical = cv2.dilate(vertical, verticalStructure)
+        # # Specify size on vertical axis
+        # rows = vertical.shape[0]
+        # # print(rows)
+        # verticalsize = rows // 8
+
+        # # Create structure element for extracting vertical lines through morphology operations
+        # verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
+
+        # # Apply morphology operations
+        # vertical = cv2.erode(vertical, verticalStructure)
+        # vertical = cv2.dilate(vertical, verticalStructure)
 
         self.notes = vertical
 
