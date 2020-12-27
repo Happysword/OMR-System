@@ -32,7 +32,8 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     __debug_show_image(img_rotated)
 
     transformation_matrix = get_perspective_transformation_matrix(img_rotated)
-    img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix, (width, height))
+    img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix, (width, height),
+                                          flags=cv2.WARP_FILL_OUTLIERS)
 
     __debug_show_image(img_perspective)
 
@@ -49,7 +50,8 @@ def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
     (height, width) = img.shape[:2]
     center = (width // 2, height // 2)
     rotation_matrix = cv2.getRotationMatrix2D(center, angle_in_degrees, scale=1)
-    return cv2.warpAffine(img, rotation_matrix, (width, height), borderValue=0)
+    return cv2.warpAffine(img, rotation_matrix, (width, height), flags=cv2.WARP_FILL_OUTLIERS,
+                          borderMode=cv2.BORDER_CONSTANT, borderValue=0)
 
 
 def __crop_borders(img: np.ndarray, percentage: float = 0.01) -> np.ndarray:
