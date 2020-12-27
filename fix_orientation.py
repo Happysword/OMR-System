@@ -4,23 +4,43 @@ import math
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-# Assuming we get a binary image
-def fix_orientation(img: np.ndarray) -> np.ndarray:
+def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
+    global __DEBUG__
+    __DEBUG__ = debug
     if img.dtype == np.bool:
         img = img.astype(np.uint8) * 255
 
+    __debug_show_image(img)
+
     img = cv2.bitwise_not(img)
+
     img = __crop_borders(img)
+    __debug_show_image(img)
+
     angle = __get_rotation_angle(img)
 
+    if __DEBUG__:
+        print(angle)
+
     img_rotated = __rotate_image(img, angle)
+    __debug_show_image(img_rotated)
+
     img_rotated = __crop_image(img_rotated)
     (height, width) = img_rotated.shape
+    __debug_show_image(img_rotated)
 
     transformation_matrix = get_perspective_transformation_matrix(img_rotated)
     img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix, (width, height))
 
+    __debug_show_image(img_perspective)
+
     return cv2.bitwise_not(img_perspective)
+
+
+def __debug_show_image(img):
+    if __DEBUG__:
+        cv2.imshow("DEBUG", img)
+        cv2.waitKey()
 
 
 def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
@@ -139,6 +159,8 @@ def __crop_image(binary_image: np.ndarray):
 
 def __get_rotation_angle(binary_image: np.ndarray):
     img = cv2.medianBlur(binary_image, 9)
+    __debug_show_image(img)
+
     all_points = cv2.findNonZero(img)
     center, (width, height), angle = cv2.minAreaRect(all_points)
 
