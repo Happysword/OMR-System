@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import math
 
+__DEBUG__ = False
+
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
 def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
