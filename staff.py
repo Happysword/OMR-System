@@ -26,7 +26,7 @@ class Staff:
         horizontal = np.uint8(np.copy(img_inv))
         # Specify size on horizontal axis
         cols = horizontal.shape[1]
-        horizontal_size = cols // 30
+        horizontal_size = cols // 8
 
         # Create structure element for extracting horizontal lines through morphology operations
         horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
@@ -48,21 +48,26 @@ class Staff:
         img_inv = 1 - img
 
         vertical = np.uint8((img_inv - self.lines)*255) 
+
+
+        # Specify size on vertical axis
+        rows = vertical.shape[0]
+        # print(rows)
+        verticalsize = 3
+
+        # Create structure element for extracting vertical lines through morphology operations
+        verticalStructure1 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
+
+        # Apply morphology operations
+        vertical = cv2.erode(vertical, verticalStructure1)
+        vertical = cv2.dilate(vertical, verticalStructure1)
+
+        verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))
+
+        vertical = cv2.dilate(vertical, verticalStructure2)
+        vertical = cv2.erode(vertical, verticalStructure1)
+
         show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
-
-
-        # # Specify size on vertical axis
-        # rows = vertical.shape[0]
-        # # print(rows)
-        # verticalsize = rows // 8
-
-        # # Create structure element for extracting vertical lines through morphology operations
-        # verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
-
-        # # Apply morphology operations
-        # vertical = cv2.erode(vertical, verticalStructure)
-        # vertical = cv2.dilate(vertical, verticalStructure)
-
         self.notes = vertical
 
     # def __get_staff_thickness(self):

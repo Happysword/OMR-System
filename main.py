@@ -14,10 +14,10 @@ originalImage = cv2.imread('Images/music0.png',cv2.IMREAD_GRAYSCALE)
 thre4 = binarization.AdaptiveThresholding(originalImage,3,21) # give good results
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-fixed_orientation = fix_orientation(thre4)
-show_images([fixed_orientation])
+# fixed_orientation = fix_orientation(thre4)
+# show_images([fixed_orientation])
 
-segmented_staffs_array = segment_staff(fixed_orientation)
+segmented_staffs_array = segment_staff(thre4)
 
 # Getting Staff features
 
@@ -29,14 +29,14 @@ for i in Staffs:
 
 symbols = []      
 for staff in Staffs:
-    symbols = symbols + segment_symbols(255*staff.notes)
+    symbols = symbols + segment_symbols(staff.notes)
     # print(segment_symbols(staff.notes))
     # print(staff.positions)
     # notePoints,notesNames = NotesPositions(thre4,staff.positions,staff.space)
     # print(notesNames)
 
-# for i in symbols:
-#     cv.imshow("Image",i)
-#     cv.waitKey(0)
+for i in symbols:
+    cv.imshow("Image",i)
+    cv.waitKey(0)
 
 
