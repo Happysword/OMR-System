@@ -171,13 +171,16 @@ def are_points_same_skew(bounding_points, rectangle_points, img_shape):
 
 
 def __crop_image(binary_image: np.ndarray):
-    blurred = cv2.medianBlur(binary_image, 9)
+    blurred = cv2.medianBlur(binary_image, 5)
     all_points = cv2.findNonZero(blurred)
     x, y, w, h = cv2.boundingRect(all_points)
-    binary_image = binary_image[y: (y + h), x:(x + w)]
-    border_x = binary_image.shape[1] // 10
-    border_y = binary_image.shape[0] // 5
-    return cv2.copyMakeBorder(binary_image, border_y, border_y, border_x, border_x, cv2.BORDER_CONSTANT, value=0)
+    border_x = w // 10
+    border_y = h // 5
+    left = max(0, x - border_x)
+    right = min(binary_image.shape[1], x + w + border_x)
+    top = max(0, y - border_y)
+    bottom = min(binary_image.shape[0], y + h + border_y)
+    return binary_image[top:bottom, left:right]
 
 
 def __get_rotation_angle(binary_image: np.ndarray):
