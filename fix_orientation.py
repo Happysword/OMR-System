@@ -16,7 +16,9 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
 
     img = cv2.bitwise_not(img)
     img = remove_noise(img)
-    angle = (abs(__get_rotation_angle(img)) + abs(__get_rotation_angle_hough(img))) / 2
+    angle_hough = __get_rotation_angle_hough(img)
+    angle = (abs(__get_rotation_angle(img)) + abs(angle_hough)) / 2
+    angle = -angle if (angle_hough < 0) else angle
 
     if __DEBUG__:
         print(angle)
@@ -257,7 +259,7 @@ def __get_hough_lines(binary_image: np.ndarray):
 
 # Remove Extreme and Odd Values (Outliers) From The Array
 def __reject_outliers(arr: np.ndarray) -> np.ndarray:
-    return arr[abs(arr - np.mean(arr)) < np.std(arr)]
+    return arr[abs(arr - np.mean(arr)) <= 1.2 * np.std(arr)]
 
 
 def __get_rotation_angle_hough(binarized_image: np.ndarray):
