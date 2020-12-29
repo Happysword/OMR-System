@@ -3,7 +3,6 @@ import cv2
 import math
 
 __DEBUG__ = False
-__MEDIAN_SIZE__ = {}
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
@@ -16,13 +15,8 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     __debug_show_image(img)
 
     img = cv2.bitwise_not(img)
-
-    img = __crop_borders(img)
-    __debug_show_image(img)
-
     img = remove_noise(img)
-
-    angle = (__get_rotation_angle(img) + __get_rotation_angle_hough(img)) / 2
+    angle = (abs(__get_rotation_angle(img)) + abs(__get_rotation_angle_hough(img))) / 2
 
     if __DEBUG__:
         print(angle)
@@ -68,25 +62,6 @@ def remove_noise(binary_image: np.ndarray) -> np.ndarray:
     return binary_image
 
 
-def __set_median_filter_sizes(img: np.ndarray):
-    global __MEDIAN_SIZE__
-    size = img.shape[0] * img.shape[1]
-    __MEDIAN_SIZE__['SMALL'] = 5
-    __MEDIAN_SIZE__['MEDIUM'] = 7
-    __MEDIAN_SIZE__['LARGE'] = 9
-
-    median_size = 0
-    if 100_000 <= size <= 1_000_000:
-        median_size = 4
-    elif 1_000_000 <= size <= 100_000_000:
-        median_size = 8
-    elif size >= 100_000_000:
-        median_size = 12
-
-    for key, value in __MEDIAN_SIZE__.items():
-        __MEDIAN_SIZE__[key] += median_size
-
-
 def __debug_show_image(img):
     if __DEBUG__:
         cv2.imshow("DEBUG", img)
@@ -114,13 +89,6 @@ def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
 
     return cv2.warpAffine(img, rotation_matrix, (new_width, new_height), flags=cv2.WARP_FILL_OUTLIERS,
                           borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-
-
-def __crop_borders(img: np.ndarray, percentage: float = 0.01) -> np.ndarray:
-    (h, w) = img.shape[:2]
-    delta_h = int(percentage * h)
-    delta_w = int(percentage * w)
-    return img[delta_h:h - delta_h, delta_w:w - delta_w]
 
 
 def __get_line_length(line):
@@ -217,8 +185,6 @@ def __any_point_outside_image(img: np.ndarray, points):
 
 
 def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
-    __set_median_filter_sizes(img)
-    img = cv2.medianBlur(img, __MEDIAN_SIZE__['SMALL'])
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
@@ -268,12 +234,10 @@ def are_points_same_skew(bounding_points, rectangle_points, img_shape):
 
 
 def __crop_image(binary_image: np.ndarray):
-    __set_median_filter_sizes(binary_image)
-    blurred = cv2.medianBlur(binary_image, __MEDIAN_SIZE__['MEDIUM'])
-    all_points = cv2.findNonZero(blurred)
+    all_points = cv2.findNonZero(binary_image)
     x, y, w, h = cv2.boundingRect(all_points)
-    border_x = w // 10
-    border_y = h // 5
+    border_x = w // 20
+    border_y = h // 10
     left = max(0, x - border_x)
     right = min(binary_image.shape[1], x + w + border_x)
     top = max(0, y - border_y)
@@ -284,8 +248,7 @@ def __crop_image(binary_image: np.ndarray):
 def __get_hough_lines(binary_image: np.ndarray):
     rho = 1  # distance resolution in pixels of the Hough grid
     theta = np.pi / 180  # angular resolution in radians of the Hough grid
-    # minimum number of votes (intersections in Hough grid cell)
-    threshold = min(binary_image.shape[0], binary_image.shape[1]) // 5
+    threshold = np.min(binary_image.shape) // 5  # minimum number of votes (intersections in Hough grid cell)
     min_line_length = min(binary_image.shape[0], binary_image.shape[1]) // 3
     max_line_gap = min_line_length / 10  # maximum gap in pixels between connectable line segments
     lines = cv2.HoughLinesP(binary_image, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
@@ -313,11 +276,7 @@ def __get_rotation_angle_hough(binarized_image: np.ndarray):
 
 
 def __get_rotation_angle(binary_image: np.ndarray):
-    __set_median_filter_sizes(binary_image)
-    img = cv2.medianBlur(binary_image, __MEDIAN_SIZE__['LARGE'])
-    __debug_show_image(img)
-
-    all_points = cv2.findNonZero(img)
+    all_points = cv2.findNonZero(binary_image)
     center, (width, height), angle = cv2.minAreaRect(all_points)
 
     if width < height:
