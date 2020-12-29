@@ -89,7 +89,7 @@ def __get_line_angle(line):
     return math.degrees(math.atan2(y, x))
 
 
-def __get_bounding_lines(hull_points) -> list:
+def __get_bounding_lines(hull_points) -> np.ndarray:
     hull_points = np.append(hull_points, [hull_points[0]], axis=0)
 
     lines = [[hull_points[0], hull_points[1]]]
@@ -97,40 +97,47 @@ def __get_bounding_lines(hull_points) -> list:
     for i in range(2, len(hull_points)):
         line = [hull_points[i - 1], hull_points[i]]
         new_angle = abs(__get_line_angle(line))
-        if abs(old_angle - new_angle) <= 15:
+        if abs(old_angle - new_angle) <= 45:
             lines[-1][1] = hull_points[i]
         else:
             lines.append(line)
         old_angle = abs(__get_line_angle(lines[-1]))
 
     lines.sort(key=__get_line_length, reverse=True)
-    return lines[0:4]
+    return __sort_boundary_lines(lines[0:4])
 
 
-# Return Top-Left , Top-Right , Bottom-Right , Bottom-Left boundary boundary points
-# They are used for perspective fixing, therefore we use only left and right lines to get points
+# Sort boundary lines to be : left, top, right, bottom
 # Left have min sum of x , right have max sum of x
 # Top have min sum of y , Bottom have max sum of y
-def __get_boundary_points(boundary_lines: list) -> np.ndarray:
+def __sort_boundary_lines(boundary_lines: list):
     boundary_lines = np.array(boundary_lines)
     sum: np.ndarray = boundary_lines.sum(axis=1)
     sum = sum.reshape((4, 2))
 
     min_x_index = np.argmin(sum, axis=0)[0]
+    min_y_index = np.argmin(sum, axis=0)[1]
     max_x_index = np.argmax(sum, axis=0)[0]
+    max_y_index = np.argmax(sum, axis=0)[1]
 
-    left = boundary_lines[min_x_index].reshape((2, 2))
-    right = boundary_lines[max_x_index].reshape((2, 2))
+    rect = np.zeros_like(boundary_lines)
+    rect[0] = boundary_lines[min_x_index]
+    rect[1] = boundary_lines[min_y_index]
+    rect[2] = boundary_lines[max_x_index]
+    rect[3] = boundary_lines[max_y_index]
 
-    left_sum = np.sum(left, axis=1)
-    right_sum = np.sum(right, axis=1)
+    return rect
 
-    top_left = left[np.argmin(left_sum, axis=0)]
-    bottom_left = left[np.argmax(left_sum, axis=0)]
-    top_right = right[np.argmin(right_sum, axis=0)]
-    bottom_right = right[np.argmax(right_sum, axis=0)]
 
-    return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.float32)
+# Return Top-Left , Top-Right , Bottom-Right , Bottom-Left boundary boundary points
+# They are used for perspective fixing, therefore we use only left and right lines to get points
+def __get_boundary_points(boundary_lines) -> np.ndarray:
+    bounding_points = np.zeros((4, 2), dtype=np.float32)
+    for i, line in enumerate(boundary_lines):
+        next_line = boundary_lines[(i + 1) % len(boundary_lines)]
+        intersection = __get_intersection(line, next_line)
+        bounding_points[i] = intersection
+    return bounding_points
 
 
 # Line is defined by s (starting point) , e (ending point)
@@ -152,18 +159,45 @@ def __get_intersection(line1, line2):
     return s1 + direction1 * t1
 
 
+# points is array in form of [[x1,y1] , [x2,y2] ...]
+def __any_point_outside_image(img: np.ndarray, points):
+    for point in points:
+        if point[0] < 0 or point[0] >= img.shape[1]:
+            return True
+        if point[1] < 0 or point[1] >= img.shape[0]:
+            return True
+    return False
+
+
 def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
+    img = cv2.medianBlur(img, 3)
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
     bounding_lines = __get_bounding_lines(hull_points)
-    bounding_points = __get_boundary_points(bounding_lines)
+    # debug_image = img.copy() // 4
+    # cv2.drawContours(debug_image, np.int32(bounding_lines), -1, (160, 0, 0), 2)
+    # __debug_show_image(debug_image)
 
-    x, y, w, h = cv2.boundingRect(hull_points)
+    if bounding_lines.shape[0] < 4:
+        return np.eye(3)
+
+    try:
+        bounding_points = __get_boundary_points(bounding_lines)
+    except ArithmeticError:
+        return np.eye(3)
+
+    if __any_point_outside_image(img, bounding_points):
+        return np.eye(3)
+
+    # cv2.drawContours(debug_image, bounding_points.reshape((4, 1, 2)).astype(int), -1, (255, 0, 0), 10)
+    # __debug_show_image(debug_image)
+
+    x, y, w, h = cv2.boundingRect(bounding_points)
     rectangle_points = np.float32([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
 
     if are_points_same_skew(bounding_points, rectangle_points, img.shape):
-        bounding_points = rectangle_points
+        return np.eye(3)
 
     transformation_matrix = cv2.getPerspectiveTransform(bounding_points, rectangle_points)
     return transformation_matrix
