@@ -19,7 +19,7 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     img = __crop_borders(img)
     __debug_show_image(img)
 
-    angle = __get_rotation_angle(img)
+    angle = (__get_rotation_angle(img) + __get_rotation_angle_hough(img)) / 2
 
     if __DEBUG__:
         print(angle)
@@ -196,6 +196,37 @@ def __crop_image(binary_image: np.ndarray):
     top = max(0, y - border_y)
     bottom = min(binary_image.shape[0], y + h + border_y)
     return binary_image[top:bottom, left:right]
+
+
+def __get_hough_lines(binary_image: np.ndarray):
+    rho = 1  # distance resolution in pixels of the Hough grid
+    theta = np.pi / 180  # angular resolution in radians of the Hough grid
+    # minimum number of votes (intersections in Hough grid cell)
+    threshold = min(binary_image.shape[0], binary_image.shape[1]) // 5
+    min_line_length = min(binary_image.shape[0], binary_image.shape[1]) // 3
+    max_line_gap = min_line_length / 10  # maximum gap in pixels between connectable line segments
+    lines = cv2.HoughLinesP(binary_image, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+    return lines
+
+
+# Remove Extreme and Odd Values (Outliers) From The Array
+def __reject_outliers(arr: np.ndarray) -> np.ndarray:
+    return arr[abs(arr - np.mean(arr)) < np.std(arr)]
+
+
+def __get_rotation_angle_hough(binarized_image: np.ndarray):
+    lines_endpoints = __get_hough_lines(binarized_image)
+
+    data_type = [('length', float), ('angle', float)]
+    lines_properties = np.zeros(len(lines_endpoints), dtype=data_type)
+
+    for i, line in enumerate(lines_endpoints):
+        lines_properties[i]['length'] = __get_line_length(line)
+        lines_properties[i]['angle'] = __get_line_angle(line)
+
+    lines_properties[::-1].sort(order='length')  # sort in descending order by length field
+
+    return np.mean(__reject_outliers(lines_properties[:]['angle']))
 
 
 def __get_rotation_angle(binary_image: np.ndarray):
