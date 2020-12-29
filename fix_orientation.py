@@ -20,6 +20,8 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     img = __crop_borders(img)
     __debug_show_image(img)
 
+    img = remove_noise(img)
+
     angle = (__get_rotation_angle(img) + __get_rotation_angle_hough(img)) / 2
 
     if __DEBUG__:
@@ -39,6 +41,31 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     __debug_show_image(img_perspective)
 
     return cv2.bitwise_not(img_perspective)
+
+
+def remove_noise(binary_image: np.ndarray) -> np.ndarray:
+    filter_size = int(np.max(binary_image.shape) // 10)
+    filter_size = filter_size + 1 if (filter_size % 2 == 0) else filter_size
+
+    img = cv2.dilate(binary_image, (filter_size, filter_size), iterations=25)
+    __debug_show_image(img)
+    n, img = cv2.connectedComponents(img, connectivity=8, ltype=cv2.CV_16U)
+
+    unique, count = np.unique(img, return_counts=True)
+    # Find index of max element except the background (backgrounds is always 0)
+    # Added 1 to compensate removing the background
+    max = np.argmax(count[1:]) + 1
+
+    max_elements = []
+    for i in range(1, n):
+        i_max = count[i] / count[max]
+        if i_max >= 0.25:
+            max_elements.append(unique[i])
+
+    img[np.isin(img, max_elements)] = 1 << 15  # img is uint16
+
+    binary_image[img != 1 << 15] = 0
+    return binary_image
 
 
 def __set_median_filter_sizes(img: np.ndarray):
