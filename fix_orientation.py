@@ -3,6 +3,7 @@ import cv2
 import math
 
 __DEBUG__ = False
+__MEDIAN_SIZE__ = {}
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
@@ -38,6 +39,25 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
     __debug_show_image(img_perspective)
 
     return cv2.bitwise_not(img_perspective)
+
+
+def __set_median_filter_sizes(img: np.ndarray):
+    global __MEDIAN_SIZE__
+    size = img.shape[0] * img.shape[1]
+    __MEDIAN_SIZE__['SMALL'] = 5
+    __MEDIAN_SIZE__['MEDIUM'] = 7
+    __MEDIAN_SIZE__['LARGE'] = 9
+
+    median_size = 0
+    if 100_000 <= size <= 1_000_000:
+        median_size = 4
+    elif 1_000_000 <= size <= 100_000_000:
+        median_size = 8
+    elif size >= 100_000_000:
+        median_size = 12
+
+    for key, value in __MEDIAN_SIZE__.items():
+        __MEDIAN_SIZE__[key] += median_size
 
 
 def __debug_show_image(img):
@@ -170,7 +190,8 @@ def __any_point_outside_image(img: np.ndarray, points):
 
 
 def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
-    img = cv2.medianBlur(img, 3)
+    __set_median_filter_sizes(img)
+    img = cv2.medianBlur(img, __MEDIAN_SIZE__['SMALL'])
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
@@ -220,7 +241,8 @@ def are_points_same_skew(bounding_points, rectangle_points, img_shape):
 
 
 def __crop_image(binary_image: np.ndarray):
-    blurred = cv2.medianBlur(binary_image, 5)
+    __set_median_filter_sizes(binary_image)
+    blurred = cv2.medianBlur(binary_image, __MEDIAN_SIZE__['MEDIUM'])
     all_points = cv2.findNonZero(blurred)
     x, y, w, h = cv2.boundingRect(all_points)
     border_x = w // 10
@@ -264,7 +286,8 @@ def __get_rotation_angle_hough(binarized_image: np.ndarray):
 
 
 def __get_rotation_angle(binary_image: np.ndarray):
-    img = cv2.medianBlur(binary_image, 9)
+    __set_median_filter_sizes(binary_image)
+    img = cv2.medianBlur(binary_image, __MEDIAN_SIZE__['LARGE'])
     __debug_show_image(img)
 
     all_points = cv2.findNonZero(img)
