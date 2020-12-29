@@ -49,8 +49,23 @@ def __debug_show_image(img):
 def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
     (height, width) = img.shape[:2]
     center = (width // 2, height // 2)
+
+    # Rotation Matrix:
+    # [ cos -sin ]
+    # [ sin  cos ]
     rotation_matrix = cv2.getRotationMatrix2D(center, angle_in_degrees, scale=1)
-    return cv2.warpAffine(img, rotation_matrix, (width, height), flags=cv2.WARP_FILL_OUTLIERS,
+    cos = np.abs(rotation_matrix[0, 0])
+    sin = np.abs(rotation_matrix[0, 1])
+
+    # New dimensions of the image
+    new_width = int((height * sin) + (width * cos))
+    new_height = int((height * cos) + (width * sin))
+
+    # Add translation to rotation matrix
+    rotation_matrix[0, 2] += (new_width / 2) - center[0]
+    rotation_matrix[1, 2] += (new_height / 2) - center[1]
+
+    return cv2.warpAffine(img, rotation_matrix, (new_width, new_height), flags=cv2.WARP_FILL_OUTLIERS,
                           borderMode=cv2.BORDER_CONSTANT, borderValue=0)
 
 
