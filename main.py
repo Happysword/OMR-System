@@ -39,11 +39,11 @@ for filename in io_utils.get_filenames(args.input_path):
         for staff in staffs:
             temp = segment_symbols(staff.notes)
             symbols = symbols + temp
-            show_images(temp)
+            # show_images(temp)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            # notePoints,notesNames = NotesPositions(thre4,staff.positions,staff.space)
-            # print(notesNames)
+            notePoints,notesNames = NotesPositions(staff.image,staff.positions,staff.space,staff.notes)
+            print(notesNames)
     except Exception as e:
         print(e)
         pass
