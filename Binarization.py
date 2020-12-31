@@ -12,7 +12,7 @@ def AdaptiveThresholding(img,method=0,block_size=11):
     elif(method == 2):
         outputImg = img > threshold_niblack(img, block_size, k=0.8)
     elif(method == 3):
-        outputImg = img > threshold_sauvola(img, block_size)         
+        outputImg = img > threshold_sauvola(img, block_size) 
     
     return outputImg
 

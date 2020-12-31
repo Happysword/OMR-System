@@ -25,15 +25,15 @@ for filename in io_utils.get_filenames(args.input_path):
 
         # utils.write_image(fixed_orientation, args.output_path, filename)
 
-        segmented_staffs_array = segment_staff(thre4 * 255)
-
-        # Getting Staff features
+        segmented_staffs_array = segment_staff(fixed_orientation)
+        # show_images(segmented_staffs_array)
+        # # # Getting Staff features
 
         staffs = []
         for segment in segmented_staffs_array:
             staffs.append(Staff(np.uint8(segment)))
-        for i in staffs:
-            show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
+        # for i in staffs:
+        #     show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
         symbols = []
         for staff in staffs:

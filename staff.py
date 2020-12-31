@@ -67,7 +67,7 @@ class Staff:
         vertical = cv2.dilate(vertical, verticalStructure2)
         vertical = cv2.erode(vertical, verticalStructure1)
 
-        show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
+        # show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
         self.notes = vertical
 
     # def __get_staff_thickness(self):
