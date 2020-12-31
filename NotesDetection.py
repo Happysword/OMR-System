@@ -20,31 +20,46 @@ lineNames = ['c','d','e','f','g','a','b','c2','d2','e2','f2','g2','a2','b2']
 # TODO: find a way to detect hollow notes
 
 # Returns the coordinates of note and array of the note names
-def NotesPositions(thresholdedImg,linesPos,space):
-    invertedImg = 255 - thresholdedImg
-    invertedImg = np.uint8(invertedImg)
+def NotesPositions(thresholdedImg,linesPos,space,noteImg):
+    # invertedImg = 255 - thresholdedImg
+    # invertedImg = np.uint8(invertedImg)
 
     # Creating circle SE with size of the note circle
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
-    erosion = cv2.erode(invertedImg,kernel,iterations = 1)
+    erosion = cv2.erode(noteImg,kernel,iterations = 1)
     
-    show_images([thresholdedImg,erosion])
+    show_images([erosion])
 
+    # show_images([thresholdedImg,erosion])
+
+    hollowPoints = _getHollowPoints(noteImg,space)
     notePoints = _getPoints(erosion)
+
+    # Solid is 0 , Hollow is 1 (for third argument)
+    for solidNote in notePoints:
+        solidNote.append(0)
+
+    for hollowNote in hollowPoints:
+        hollowNote.append(1)
+
+    bothNotesPoints = notePoints + hollowPoints
+
     linesDic = dict()
     linesDic = _linesNames(linesPos,space)
 
     notePoints = sorted(notePoints, key=lambda x: x[0])
+    hollowPoints = sorted(hollowPoints, key=lambda x: x[0])
+    bothNotesPoints = sorted(bothNotesPoints, key=lambda x: x[0])
 
     allNotes = []
     i = 0
-    while i < len(notePoints) - 1:
+    while i < len(bothNotesPoints):
         note = []
-        note.append(notePoints[i])
-        for j in range(i+1,len(notePoints)):
-           if abs( notePoints[j][0] - notePoints[i][0]) < space :
-               note.append(notePoints[j])
-               i = j - 1
+        note.append(bothNotesPoints[i])
+        for j in range(i+1,len(bothNotesPoints)):
+           if abs( bothNotesPoints[j][0] - bothNotesPoints[i][0]) < space :
+               note.append(bothNotesPoints[j])
+               i = j
         allNotes.append(note)
         i +=1 
 
@@ -53,12 +68,33 @@ def NotesPositions(thresholdedImg,linesPos,space):
         groupName = []
         for note in group:
             minimum = min(linesDic, key=lambda x:abs(x-note[1]))
-            groupName.append(linesDic[minimum])
+            if note[2] == 0:
+                groupName.append(linesDic[minimum])
+            else:
+                groupName.append(linesDic[minimum]+"/2")
         notesNames.append(groupName)
 
-    print(allNotes)
+    # print(notesNames)
 
-    return notePoints,notesNames
+    finalString = ""
+
+    finalString += "[ "
+
+    for name in notesNames:
+        if len(name) == 1:
+            finalString += name[0] + " "
+        else:
+            finalString += "{ "
+            for i,oneName in enumerate(name):
+                if i == len(name)-1:
+                    finalString += oneName[0]
+                else:    
+                    finalString += oneName[0] + " , "
+            finalString += " } "
+
+    finalString += " ]"
+
+    return notePoints,finalString
 
 # Retruns dic of [lines y pos - names]
 def _linesNames(linesPos,space):
@@ -96,3 +132,60 @@ def _getPoints(img):
             points.append(point)
                 
         return points
+
+def _getHollowPoints(img,space):
+    kernelsq = np.ones((5,5),np.uint8)
+    closing = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernelsq)
+    
+    kernelLine = cv2.getStructuringElement(cv2.MORPH_RECT,(7, 1))    
+
+    closing = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernelLine)
+
+    skeletonizedImage = np.uint8( skeletonize(closing/255) )
+
+    h, w = skeletonizedImage.shape[:2]
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    im_floodfill = skeletonizedImage.copy()
+    cv2.floodFill(im_floodfill, mask, (0,0), 255);
+
+
+    invertedFlood = 255 - im_floodfill
+
+    kernelsq2 = np.ones((3,3),np.uint8)
+    openinginvertedFlood = cv2.morphologyEx(invertedFlood, cv2.MORPH_OPEN, kernelsq2)
+
+    kernelelipse = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.8),int(space*0.8)))    
+    # erosion = cv2.erode(invertedFlood,kernel,iterations = 1)
+    # dilation = cv2.erode(erosion,kernel,iterations = 1)
+
+    openinginvertedFlood = cv2.morphologyEx(openinginvertedFlood, cv2.MORPH_OPEN, kernelelipse)
+
+    show_images([openinginvertedFlood])
+
+    contours = find_contours(openinginvertedFlood, 0.8)
+    points = []
+    for c in contours:
+        xValues = np.round(c[:, 1]).astype(int)
+        yValues = np.round(c[:, 0]).astype(int)
+        xdiff = (xValues.max() - xValues.min())
+        ydiff = (yValues.max() - yValues.min())
+
+        if not (xdiff > space*1.4 or ydiff > space*1.4):
+            point = []
+            point.append( mean(xValues) )
+            point.append( mean(yValues) )
+            points.append(point)
+
+    # print(points)
+    return points
+
+    # invertedFloodClosed = cv2.morphologyEx(invertedFlood, cv2.MORPH_CLOSE, kernelsq,iterations=2)
+    # show_images([invertedFloodClosed])
+
+
+
+
+
+
+
