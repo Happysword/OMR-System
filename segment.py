@@ -12,9 +12,10 @@ def segment_staff(img):
     inverted_img = (255 - img) / 255
     
     #Dilate the image
-    struct_element = cv.getStructuringElement(cv.MORPH_RECT,(5,5)) #Should check for better structuring elements
+    
+    struct_element = cv.getStructuringElement(cv.MORPH_RECT,(60,5)) #Should check for better structuring elements
     dilated_img = cv.dilate(inverted_img,struct_element,iterations=5)
-    # show_images([dilated_img]) #print dilated image
+    show_images([dilated_img]) #print dilated image
 
     #Calculate the Horizontal histogram 
     hist_hor = np.sum(dilated_img,axis=1)
@@ -74,6 +75,10 @@ def segment_staff(img):
 
     #Find the boundaries with best threshold
     threshold = best_iteration[3]
+    plt.plot(hist_hor)
+    plt.hlines(threshold,-50,len(hist_hor)+50,colors="0.5",linestyles="dashed")
+    plt.show()
+
     start_cut = 0
     staff_indices = []
     less_flag = 0
@@ -110,21 +115,25 @@ def segment_symbols(img, width = 16, height = 32):
     while i < len(sorted_bounding_rect)-1:
         x_min = sorted_bounding_rect[i][0]
         x_max = sorted_bounding_rect[i][0] + sorted_bounding_rect[i][2]
+        y_min = sorted_bounding_rect[i][1]
+        y_max = sorted_bounding_rect[i][1] + sorted_bounding_rect[i][3]
         for j in range(i+1,len(sorted_bounding_rect)):
             if sorted_bounding_rect[j][0] <= x_max + 3:
                 x_max = max(x_max,sorted_bounding_rect[j][0]+sorted_bounding_rect[j][2])
+                y_max = max(y_max,sorted_bounding_rect[j][1]+sorted_bounding_rect[j][3])
+                y_min = min(y_min,sorted_bounding_rect[j][1])
             else:
                 i = j-1
-                new_sorted_bounding_rect.append((x_min,x_max))
+                new_sorted_bounding_rect.append((x_min,x_max,y_min,y_max))
                 break
         i +=1
 
     #Segment every Symbol and Put it as an image in the contours array
     contours_array = []
     for (i,c) in enumerate(new_sorted_bounding_rect):
-        x_min ,x_max = new_sorted_bounding_rect[i]
+        x_min ,x_max,y_min,y_max = new_sorted_bounding_rect[i]
         if x_max-x_min > 10:  #Should find a way to get the size w to neglect
-            cropped_contour= img[:, x_min:x_max]
+            cropped_contour= img[y_min:y_max, x_min:x_max]
             contours_array.append(cropped_contour)
 
     return contours_array
