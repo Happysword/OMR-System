@@ -1,14 +1,18 @@
 import numpy as np
 import cv2
 import math
+import Binarization
 
 __DEBUG__ = False
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
+def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     global __DEBUG__
     __DEBUG__ = debug
+    is_binary_image = __is_binary_image(original_image)
+
+    img = Binarization.AdaptiveThresholding(original_image.copy(), 3)
     if img.dtype == np.bool:
         img = img.astype(np.uint8) * 255
 
@@ -24,6 +28,9 @@ def fix_orientation(img: np.ndarray, debug=False) -> np.ndarray:
 
     if __DEBUG__:
         print(angle)
+
+    if is_binary_image and abs(angle) <= 1.5:
+        return original_image
 
     img_rotated = __rotate_image(img, angle)
     __debug_show_image(img_rotated)
@@ -64,6 +71,11 @@ def remove_noise(binary_image: np.ndarray) -> np.ndarray:
 
     binary_image[img != 1 << 15] = 0
     return binary_image
+
+
+def __is_binary_image(img: np.ndarray) -> bool:
+    unique, count = np.unique(img, return_counts=True)
+    return (count[0] + count[-1]) / img.size >= 0.85
 
 
 def __debug_show_image(img):
