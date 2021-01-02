@@ -16,19 +16,20 @@ for filename in io_utils.get_filenames(args.input_path):
 
         originalImage = io_utils.read_grayscale_image(args.input_path, filename)
 
-        # Binarization Step
-        thre4 = binarization.AdaptiveThresholding(originalImage, 3)  # give good results
-
         # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-        fixed_orientation = fix_orientation(thre4, __DEBUG__)
-        show_images([fixed_orientation])
+        fixed_orientation = fix_orientation(originalImage, __DEBUG__)
 
-        # utils.write_image(fixed_orientation, args.output_path, filename)
+        # Binarization Step
+        binary_image = 255 * binarization.AdaptiveThresholding(fixed_orientation, 3)  # give good results
 
-        segmented_staffs_array = segment_staff(fixed_orientation)
+        show_images([fixed_orientation, binary_image])
+
+        # io_utils.write_image(fixed_orientation, args.output_path, filename)
+
+        segmented_staffs_array = segment_staff(binary_image)
         show_images(segmented_staffs_array)
-        # # # Getting Staff features
 
+        # # # Getting Staff features
         staffs = []
         for segment in segmented_staffs_array:
             staffs.append(Staff(np.uint8(segment)))
@@ -42,7 +43,7 @@ for filename in io_utils.get_filenames(args.input_path):
             show_images(temp)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            notePoints,notesNames = NotesPositions(staff.image,staff.positions,staff.space,staff.notes)
+            notePoints, notesNames = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
             print(notesNames)
     except Exception as e:
         print(e)

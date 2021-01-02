@@ -20,7 +20,9 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
 
     img = cv2.bitwise_not(img)
     img = remove_noise(img)
-    img = __crop_image(img)
+    top, bottom, left, right = __get_cropping_rectangle(img)
+    img = img[top:bottom, left:right]
+    original_image = original_image[top:bottom, left:right]
 
     angle_hough = __get_rotation_angle_hough(img)
     angle = (abs(__get_rotation_angle(img)) + abs(angle_hough)) / 2
@@ -32,20 +34,26 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     if is_binary_image and abs(angle) <= 1.5:
         return original_image
 
+    average_color = __get_average_color(original_image)
+    print("dom", average_color)
     img_rotated = __rotate_image(img, angle)
-    __debug_show_image(img_rotated)
+    original_img_rotated = __rotate_image(original_image, angle, average_color)
+    __debug_show_image(original_img_rotated)
 
-    img_rotated = __crop_image(img_rotated)
+    top, bottom, left, right = __get_cropping_rectangle(img_rotated)
+    img_rotated = img_rotated[top:bottom, left:right]
+    original_img_rotated = original_img_rotated[top:bottom, left:right]
     (height, width) = img_rotated.shape
-    __debug_show_image(img_rotated)
+    __debug_show_image(original_img_rotated)
 
-    transformation_matrix = get_perspective_transformation_matrix(img_rotated)
-    img_perspective = cv2.warpPerspective(img_rotated, transformation_matrix, (width, height),
-                                          flags=cv2.WARP_FILL_OUTLIERS)
+    transformation_matrix = __get_perspective_transformation_matrix(img_rotated)
+    img_perspective = cv2.warpPerspective(original_img_rotated, transformation_matrix, (width, height),
+                                          flags=cv2.WARP_FILL_OUTLIERS, borderMode=cv2.BORDER_CONSTANT,
+                                          borderValue=average_color)
 
     __debug_show_image(img_perspective)
 
-    return cv2.bitwise_not(img_perspective)
+    return img_perspective
 
 
 def remove_noise(binary_image: np.ndarray) -> np.ndarray:
@@ -78,13 +86,17 @@ def __is_binary_image(img: np.ndarray) -> bool:
     return (count[0] + count[-1]) / img.size >= 0.85
 
 
+def __get_average_color(img: np.ndarray):
+    return np.mean(img)
+
+
 def __debug_show_image(img):
     if __DEBUG__:
         cv2.imshow("DEBUG", img)
         cv2.waitKey()
 
 
-def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
+def __rotate_image(img: np.ndarray, angle_in_degrees, interpolation_color=0) -> np.ndarray:
     (height, width) = img.shape[:2]
     center = (width // 2, height // 2)
 
@@ -104,7 +116,7 @@ def __rotate_image(img: np.ndarray, angle_in_degrees) -> np.ndarray:
     rotation_matrix[1, 2] += (new_height / 2) - center[1]
 
     return cv2.warpAffine(img, rotation_matrix, (new_width, new_height), flags=cv2.WARP_FILL_OUTLIERS,
-                          borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+                          borderMode=cv2.BORDER_CONSTANT, borderValue=interpolation_color)
 
 
 def __get_line_length(line):
@@ -200,7 +212,7 @@ def __any_point_outside_image(img: np.ndarray, points):
     return False
 
 
-def get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
+def __get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
@@ -249,7 +261,7 @@ def are_points_same_skew(bounding_points, rectangle_points, img_shape):
     return False
 
 
-def __crop_image(binary_image: np.ndarray):
+def __get_cropping_rectangle(binary_image: np.ndarray):
     all_points = cv2.findNonZero(binary_image)
     x, y, w, h = cv2.boundingRect(all_points)
     border_x = w // 20
@@ -258,7 +270,7 @@ def __crop_image(binary_image: np.ndarray):
     right = min(binary_image.shape[1], x + w + border_x)
     top = max(0, y - border_y)
     bottom = min(binary_image.shape[0], y + h + border_y)
-    return binary_image[top:bottom, left:right]
+    return top, bottom, left, right
 
 
 def __get_hough_lines(binary_image: np.ndarray):
