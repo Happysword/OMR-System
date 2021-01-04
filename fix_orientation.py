@@ -24,15 +24,17 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     img = img[top:bottom, left:right]
     original_image = original_image[top:bottom, left:right]
 
+    __debug_show_image(img)
+
+    if is_binary_image:
+        return original_image
+
     angle_hough = __get_rotation_angle_hough(img)
     angle = (abs(__get_rotation_angle(img)) + abs(angle_hough)) / 2
     angle = -angle if (angle_hough < 0) else angle
 
     if __DEBUG__:
         print(angle)
-
-    if is_binary_image and abs(angle) <= 1.5:
-        return original_image
 
     average_color = __get_average_color(original_image)
     print("dom", average_color)
