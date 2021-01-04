@@ -24,6 +24,10 @@ def write_image(img: np.ndarray, directory: str, filename: str):
     if os.path.isdir(directory) and filename is not None:
         filename = os.path.join(directory, filename)
         cv2.imwrite(filename, img)
+    elif filename is not None:
+        os.mkdir(directory)
+        filename = os.path.join(directory, filename)
+        cv2.imwrite(filename, img)
 
 
 def write_file(data: str, directory: str, filename: str):

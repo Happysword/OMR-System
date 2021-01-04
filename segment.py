@@ -13,9 +13,9 @@ def segment_staff(img):
     
     #Dilate the image
     
-    struct_element = cv.getStructuringElement(cv.MORPH_RECT,(60,5)) #Should check for better structuring elements
+    struct_element = cv.getStructuringElement(cv.MORPH_RECT,(80,6)) #Should check for better structuring elements
     dilated_img = cv.dilate(inverted_img,struct_element,iterations=5)
-    show_images([dilated_img]) #print dilated image
+    # show_images([dilated_img]) #print dilated image
 
     #Calculate the Horizontal histogram 
     hist_hor = np.sum(dilated_img,axis=1)
@@ -77,7 +77,7 @@ def segment_staff(img):
     threshold = best_iteration[3]
     plt.plot(hist_hor)
     plt.hlines(threshold,-50,len(hist_hor)+50,colors="0.5",linestyles="dashed")
-    plt.show()
+    # plt.show()
 
     start_cut = 0
     staff_indices = []
@@ -127,7 +127,6 @@ def segment_symbols(img, width = 16, height = 32):
                 new_sorted_bounding_rect.append((x_min,x_max,y_min,y_max))
                 break
         i +=1
-
     #Segment every Symbol and Put it as an image in the contours array
     contours_array = []
     for (i,c) in enumerate(new_sorted_bounding_rect):

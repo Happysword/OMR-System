@@ -26,7 +26,7 @@ class Staff:
         horizontal = np.uint8(np.copy(img_inv))
         # Specify size on horizontal axis
         cols = horizontal.shape[1]
-        horizontal_size = cols // 8
+        horizontal_size = int(cols/1.1)
 
         # Create structure element for extracting horizontal lines through morphology operations
         horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
