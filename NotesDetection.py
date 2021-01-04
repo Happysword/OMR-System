@@ -28,7 +28,7 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
     erosion = cv2.erode(noteImg,kernel,iterations = 1)
     
-    show_images([erosion])
+    # show_images([erosion])
 
     # show_images([thresholdedImg,erosion])
 
@@ -161,7 +161,7 @@ def _getHollowPoints(img,space):
 
     openinginvertedFlood = cv2.morphologyEx(openinginvertedFlood, cv2.MORPH_OPEN, kernelelipse)
 
-    show_images([openinginvertedFlood])
+    # show_images([openinginvertedFlood])
 
     contours = find_contours(openinginvertedFlood, 0.8)
     points = []

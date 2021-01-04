@@ -10,7 +10,7 @@ import cv2
 import os
 import random
 from sklearn.model_selection import train_test_split
-
+from sklearn.metrics import f1_score
 
 random_seed = 42  
 random.seed(random_seed)
@@ -50,29 +50,33 @@ def extract_hog_features(img,target_img_size = (32, 32)):
 
 def extract_features(img, feature_set='hog'):
     if feature_set == 'hog':
-        return extract_hog_features(img)
+        hog = extract_hog_features(img)
+        aspectRatio = img.shape[0] / img.shape[1] 
+        allFeature = np.append(hog,aspectRatio)
+        return allFeature
 
 
 def load_dataset(path_to_dataset,feature_set='hog'):
     features = []
     labels = []
-    img_filenames = os.listdir(path_to_dataset)
+    directoriesNames = os.listdir(path_to_dataset)
+    print(directoriesNames)
+    for directory in directoriesNames:
+        print(directory)
+        img_filenames = os.listdir(os.path.join(path_to_dataset, directory))
+        for i, fn in enumerate(img_filenames):
 
-    for i, fn in enumerate(img_filenames):
-        if fn.split('.')[-1] != 'jpg':
-            continue
+            labels.append(directory)
 
-        label = fn.split('.')[0]
-        labels.append(label)
 
-        path = os.path.join(path_to_dataset, fn)
-        img = cv2.imread(path)
-        features.append(extract_features(img, feature_set))
-        
-        # show an update every 1,000 images
-        if i > 0 and i % 1000 == 0:
-            print("[INFO] processed {}/{}".format(i, len(img_filenames)))
-        
+            path = os.path.join(path_to_dataset ,directory, fn)
+            img = cv2.imread(path)
+            features.append(extract_features(img, feature_set))
+            
+            # show an update every 1,000 images
+            if i > 0 and i % 500 == 0:
+                print("[INFO] processed {}/{}".format(i, len(img_filenames)))
+            
     return features, labels        
 
 def train_classifier(path_to_dataset, feature_set):
@@ -99,12 +103,14 @@ def train_classifier(path_to_dataset, feature_set):
 
 
 #Testing the function
-train_classifier("digits_dataset",'hog')
+train_classifier("D:\Git\OMR-Project\Dataset",'hog')
 
-test_img_path = r'Images/test5.jpg'
-img = cv2.imread(test_img_path)
-features = extract_features(img, 'hog')  # be careful of the choice of feature set
+while True:
 
-classifier = classifiers['SVM']
-value = classifier.predict([features])
-print(value)
+    test_img_path = input("Enter path: ")
+    img = cv2.imread(test_img_path)
+    features = extract_features(img, 'hog')  # be careful of the choice of feature set
+
+    classifier = classifiers['SVM']
+    value = classifier.predict([features])
+    print(value)

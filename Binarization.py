@@ -7,7 +7,7 @@ def AdaptiveThresholding(img,method=0):
 
     w,h = img.shape[:2]
     blockSize = max(w,h)
-    blockSize = int(blockSize *0.02)
+    blockSize = int(blockSize *0.03)
     
     if blockSize % 2 == 0:
         blockSize += 1

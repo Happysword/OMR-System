@@ -22,7 +22,7 @@ for filename in io_utils.get_filenames(args.input_path):
         # Binarization Step
         binary_image = 255 * binarization.AdaptiveThresholding(fixed_orientation, 3)  # give good results
 
-        # show_images([fixed_orientation, binary_image])
+        show_images([fixed_orientation, binary_image])
 
         # io_utils.write_image(fixed_orientation, args.output_path, filename)
 
@@ -33,14 +33,14 @@ for filename in io_utils.get_filenames(args.input_path):
         staffs = []
         for segment in segmented_staffs_array:
             staffs.append(Staff(np.uint8(segment)))
-        # for i in staffs:
-        #     show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
+        for i in staffs:
+            show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
         symbols = []
         for staff in staffs:
             temp = segment_symbols(staff.notes)
             symbols = symbols + temp
-            #show_images(temp)
+            show_images(temp)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
             notePoints, notesNames = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
