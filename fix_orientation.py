@@ -83,7 +83,9 @@ def remove_noise(binary_image: np.ndarray) -> np.ndarray:
 
 def __is_binary_image(img: np.ndarray) -> bool:
     unique, count = np.unique(img, return_counts=True)
-    return (count[0] + count[-1]) / img.size >= 0.85
+    count_0 = np.sum(count[unique <= 20])
+    count_255 = np.sum(count[unique >= 235])
+    return (count_0 + count_255) / img.size >= 0.9
 
 
 def __get_average_color(img: np.ndarray):
