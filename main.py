@@ -7,9 +7,15 @@ from staff import *
 from segment import *
 from NotesDetection import *
 import io_utils
+from features import extract_features
+import pickle as pickle
 
 args = io_utils.get_command_line_args()
 __DEBUG__ = args.debug
+
+# load the model from disk
+loaded_model = pickle.load(open('Model.sav', 'rb'))
+
 
 for filename in io_utils.get_filenames(args.input_path):
     try:  # Use to ignore any error and go to next file instead of exiting
@@ -22,7 +28,7 @@ for filename in io_utils.get_filenames(args.input_path):
         # Binarization Step
         binary_image = 255 * binarization.AdaptiveThresholding(fixed_orientation, 3)  # give good results
 
-        show_images([fixed_orientation, binary_image])
+        # show_images([fixed_orientation, binary_image])
 
         # io_utils.write_image(fixed_orientation, args.output_path, filename)
 
@@ -36,18 +42,28 @@ for filename in io_utils.get_filenames(args.input_path):
         for i in staffs:
             show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
-        symbols = []
+
         for staff in staffs:
-            temp = segment_symbols(staff.notes)
-            symbols = symbols + temp
-            show_images(temp)
+            Symbols = segment_symbols(staff.notes)
+            show_images(Symbols)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            notePoints, notesNames = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
+            # notePoints, notesNames = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
             # print(notesNames)
+            #Extract features and predict value
+            string_symbols = ""
+            for symbol in Symbols:
+                features = extract_features(symbol, 'hog') 
+                value = loaded_model.predict([features])
+                string_symbols = string_symbols + " " + str(value[0])
+            print(string_symbols)
 
-        for (i,symbol) in enumerate(symbols):
-            io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
+
+        # for (i,symbol) in enumerate(symbols):
+        #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
+
+
+
     except Exception as e:
         print(e)
         pass

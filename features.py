@@ -11,6 +11,15 @@ import os
 import random
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_val_score
+import pickle
+
+
+
+symbol_output_dict = {
+
+}
+
 
 random_seed = 42  
 random.seed(random_seed)
@@ -59,6 +68,7 @@ def extract_features(img, feature_set='hog'):
 def load_dataset(path_to_dataset,feature_set='hog'):
     features = []
     labels = []
+    path_to_dataset = os.path.join(os.getcwd(),path_to_dataset)
     directoriesNames = os.listdir(path_to_dataset)
     print(directoriesNames)
     for directory in directoriesNames:
@@ -89,7 +99,7 @@ def train_classifier(path_to_dataset, feature_set):
     # Since we don't want to know the performance of our classifier on images it has seen before
     # we are going to withhold some images that we will test the classifier on after training 
     train_features, test_features, train_labels, test_labels = train_test_split(
-        features, labels, test_size=0.2, random_state=random_seed)
+        features, labels, test_size=0.2, random_state=random_seed,stratify=labels,shuffle=True)
     
     print('############## Training', " SVM ", "##############")
     # Train the model only on the training features
@@ -100,17 +110,53 @@ def train_classifier(path_to_dataset, feature_set):
     accuracy = model.score(test_features, test_labels)
     
     print("SVM ", 'accuracy:', accuracy*100, '%')
+    
 
 
-#Testing the function
-train_classifier("D:\Git\OMR-Project\Dataset",'hog')
+    #################################################
 
-while True:
+    # Test for bias and variance
 
-    test_img_path = input("Enter path: ")
-    img = cv2.imread(test_img_path)
-    features = extract_features(img, 'hog')  # be careful of the choice of feature set
+    # X = []
+    # Y_train = []
+    # Y_test = []
+    # train_features2, test_features2, train_labels2, test_labels2 = train_test_split(
+    #     features, labels, test_size=9, random_state=random_seed,stratify=labels,shuffle=True)
+    
+    # for i in range(5,101,5):
+    #     X.append(i)
+    #     model.fit(train_features[0:int(0.01*i*len(train_features))], train_labels[0:int(0.01*i*len(train_labels))])
+        
+    #     accuracy = model.score(test_features[0:int(0.01*i*len(test_features))], test_labels[0:int(0.01*i*len(test_labels))])
+    #     Y_train.append(accuracy)
+    #     print("SVM ", 'accuracy:', accuracy*100, '%')
+    #     scores = cross_val_score(model, train_features2[0:int(0.01*i*len(features))], train_labels[0:int(0.01*i*len(labels))], cv=5)
+    #     Y_test.append(scores.mean())
+    #     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
+    # plt.plot(Y_train,color="g")
+    # plt.plot(Y_test,color="r")
+    # plt.show()
+
+
+
+def main():
+    #Testing the function
+    train_classifier("Dataset",'hog')
     classifier = classifiers['SVM']
-    value = classifier.predict([features])
-    print(value)
+    # save the model to disk
+    filename = 'Model.sav'
+    pickle.dump(classifier, open(filename, 'wb'))
+
+    # while True:
+
+    #     test_img_path = input("Enter path: ")
+    #     img = cv2.imread(test_img_path)
+    #     features = extract_features(img, 'hog')  # be careful of the choice of feature set
+
+    #     value = classifier.predict([features])
+    #     print(value)
+
+if __name__ == "__main__":
+   # stuff only to run when not called via 'import' here
+   main()
