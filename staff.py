@@ -1,7 +1,7 @@
 from commonfunctions import *
 import cv2
 import os
-
+import operator
 class Staff:
     def __init__(self,image):
         self.image = image
@@ -11,9 +11,9 @@ class Staff:
         self.lines = np.zeros(self.image.shape, dtype=np.uint8)
         self.notes = np.zeros(self.image.shape, dtype=np.uint8)
         self.__get_staff_lines()
-        self.__get_staff_notes()
+        #self.__get_staff_notes()
         # self.__get_staff_thickness()
-        self.__get_staff_positions()
+        #self.__get_staff_positions()
 
     def __get_staff_lines(self):
         img = np.uint8(self.image)
@@ -24,20 +24,91 @@ class Staff:
         img_inv = 1 - img
 
         horizontal = np.uint8(np.copy(img_inv))
-        # Specify size on horizontal axis
-        cols = horizontal.shape[1]
-        horizontal_size = int(cols/16)
+        # # Specify size on horizontal axis
+        # cols = horizontal.shape[1]
+        # horizontal_size = int(cols/16)
 
-        # Create structure element for extracting horizontal lines through morphology operations
-        horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
+        # # Create structure element for extracting horizontal lines through morphology operations
+        # horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
 
-        # Apply morphology operations
-        horizontal = cv2.erode(horizontal, horizontalStructure)
-        # show_images([horizontal])
-        horizontal = cv2.dilate(horizontal, horizontalStructure)
+        # # Apply morphology operations
+        # horizontal = cv2.erode(horizontal, horizontalStructure)
+        # # show_images([horizontal])
+        # horizontal = cv2.dilate(horizontal, horizontalStructure)
+
+        # self.lines = horizontal
+        # show_images([self.lines])
+
+        rle = list()
+        rle_total = list()
+        for y in range(horizontal.shape[1]):
+            count = 1
+            rle_in = list()
+            for x in range(1, horizontal.shape[0]):
+                if(horizontal[x][y] == horizontal[x-1][y]):
+                    count+=1  
+                else :
+                    rle_in.append(count)
+                    count = 1
+            rle_in.append(count)
+            if len(rle_in) > 9:
+                rle.append(np.array(rle_in))
+            rle_total.append(np.array(rle_in))
+
+        rle = np.array(rle)
+        rle_total = np.array(rle_total)
+
+        height = 0
+        space = 0
+        
+        for i, col in enumerate(rle):
+            line_freq = dict()
+            space_freq = dict()
+            start = 0
+            
+            if horizontal[0][i] == 0:
+                start = 1
+            
+            for x in range(start, len(col), 2):
+                if col[x] not in line_freq.keys():
+                    line_freq[col[x]] = 0
+                line_freq[col[x]] += 1
+
+            for x in range(1 - start, len(col),2):
+                if col[x] not in space_freq.keys():
+                    space_freq[col[x]] = 0
+                space_freq[col[x]] += 1
+            
+            height += max(line_freq.items(), key=operator.itemgetter(1))[0]
+            space += max(space_freq.items(), key=operator.itemgetter(1))[0]
+
+        self.thickness = int(np.round(height / len(rle)))
+        self.space = int(np.round(space / len(rle)))
+        
+        Tlen = min(2*self.thickness, self.thickness+self.space)
+        # print("Tlen: ", Tlen)
+
+        for i, col in enumerate(rle_total):
+            start = 0
+            if horizontal[0][i] == 0:
+                start = 1
+            for x in range(start, len(col), 2):
+                if col[x] >= Tlen:
+                    horizontal[sum(col[:x]):sum(col[:x+1]), i] = 0
 
         self.lines = horizontal
-        # show_images([self.lines])
+        self.notes = img_inv - self.lines
+        self.notes *= 255
+
+        # sizey = self.space // 2
+        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (sizey, sizey))
+
+        # self.notes = cv2.erode(self.notes, verticalStructure2)
+        # self.notes = cv2.dilate(self.notes, verticalStructure2)
+        # show_images([self.lines, self.notes])
+
+
+
 
     def __get_staff_notes(self):
         img = np.uint8(self.image)
@@ -65,10 +136,11 @@ class Staff:
         verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))
 
         vertical = cv2.dilate(vertical, verticalStructure2)
-        vertical = cv2.erode(vertical, verticalStructure1)
+        vertical = cv2.erode(vertical, verticalStructure2)
 
         # show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
         self.notes = vertical
+
 
     # def __get_staff_thickness(self):
         
