@@ -1,0 +1,47 @@
+name: autograder
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-20.04
+    
+    steps:      
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+
+    - name: Add conda to system path
+      run: echo $CONDA/bin >> $GITHUB_PATH
+      
+    - name : Checkout Autograder
+      uses: actions/checkout@v2
+      with:
+        repository: YoussefSGhatas/ip-project-grader
+        path: autograder
+        
+    - name : Remove sample submission
+      run : rm -r ./autograder/students-work/*
+      
+    - name : Checkout Project
+      uses: actions/checkout@v2
+      with:
+        path: autograder/students-work/9999/SEM-04
+
+    - name : Copy test set into input folder
+      run : |
+        mkdir input
+        mkdir output
+        image_files=(`find ./autograder/students-work/9999/SEM-04/PublicTestCases -type f -iname "*.png" -or -iname "*.jpg" -or -iname "*.jpeg" 2> /dev/null`) 
+        cp "${image_files[@]}" ./input/
+
+    - name: Run autograder
+      run: |
+        python ./autograder/run-students-docker-STD.py "$PWD/autograder/students-work/" "$PWD/input" "$PWD/output" -v 1
+
+    - name: Upload test cases output
+      uses: actions/upload-artifact@v2
+      with:
+        name: test_cases_output
+        path: ./output/*
