@@ -75,8 +75,8 @@ def segment_staff(img):
 
     #Find the boundaries with best threshold
     threshold = best_iteration[3]
-    plt.plot(hist_hor)
-    plt.hlines(threshold,-50,len(hist_hor)+50,colors="0.5",linestyles="dashed")
+    # plt.plot(hist_hor)
+    # plt.hlines(threshold,-50,len(hist_hor)+50,colors="0.5",linestyles="dashed")
     # plt.show()
 
     start_cut = 0
