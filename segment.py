@@ -109,10 +109,11 @@ def segment_symbols(img, width = 16, height = 32):
     boundingBoxes = [cv.boundingRect(c) for c in contours] 
     (sorted_contours,sorted_bounding_rect) = zip(*sorted(zip(contours, boundingBoxes),key=lambda b:b[1][0]))
 
+    
     #Use the sorted_bounding_rect to merge the overlapping Symbols
     new_sorted_bounding_rect = []
     i = 0
-    while i < len(sorted_bounding_rect)-1:
+    while i < len(sorted_bounding_rect):
         x_min = sorted_bounding_rect[i][0]
         x_max = sorted_bounding_rect[i][0] + sorted_bounding_rect[i][2]
         y_min = sorted_bounding_rect[i][1]
@@ -126,6 +127,9 @@ def segment_symbols(img, width = 16, height = 32):
                 i = j-1
                 new_sorted_bounding_rect.append((x_min,x_max,y_min,y_max))
                 break
+        if i == len(sorted_bounding_rect)-1 and sorted_bounding_rect[i][0] > new_sorted_bounding_rect[-1][0] + new_sorted_bounding_rect[-1][2] + 3:
+            new_sorted_bounding_rect.append((x_min,x_max,y_min,y_max))
+            break
         i +=1
     #Segment every Symbol and Put it as an image in the contours array
     contours_array = []

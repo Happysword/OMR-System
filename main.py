@@ -14,7 +14,6 @@ args = io_utils.get_command_line_args()
 __DEBUG__ = args.debug
 
 # load the model from disk
-print("Hello")
 loaded_model = pickle.load(open('Model.sav', 'rb'))
 
 
@@ -40,8 +39,8 @@ for filename in io_utils.get_filenames(args.input_path):
         staffs = []
         for segment in segmented_staffs_array:
             staffs.append(Staff(np.uint8(segment)))
-        # for i in staffs:
-        #     show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
+        for i in staffs:
+            show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
 
         for staff in staffs:
