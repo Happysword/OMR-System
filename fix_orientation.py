@@ -12,7 +12,7 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     __DEBUG__ = debug
     is_binary_image = __is_binary_image(original_image)
 
-    img = Binarization.AdaptiveThresholding(original_image.copy(), 3)
+    img = Binarization.AdaptiveThresholding(original_image.copy(), method=3)
     if img.dtype == np.bool:
         img = img.astype(np.uint8) * 255
 
@@ -26,10 +26,11 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
 
     __debug_show_image(img)
 
-    if is_binary_image:
+    angle_hough = __get_rotation_angle_hough(img)
+
+    if is_binary_image and abs(angle_hough) <= 2:
         return original_image
 
-    angle_hough = __get_rotation_angle_hough(img)
     angle = (abs(__get_rotation_angle(img)) + abs(angle_hough)) / 2
     angle = -angle if (angle_hough < 0) else angle
 

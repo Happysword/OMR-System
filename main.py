@@ -16,8 +16,8 @@ __DEBUG__ = args.debug
 # load the model from disk
 loaded_model = pickle.load(open('Model.sav', 'rb'))
 
-
-for filename in io_utils.get_filenames(args.input_path):
+filenames = io_utils.get_filenames(args.input_path)
+for filename in filenames:
     try:  # Use to ignore any error and go to next file instead of exiting
 
         originalImage = io_utils.read_grayscale_image(args.input_path, filename)
