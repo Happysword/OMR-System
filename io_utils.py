@@ -33,8 +33,16 @@ def write_image(img: np.ndarray, directory: str, filename: str):
 def write_file(data: str, directory: str, filename: str):
     if os.path.isdir(directory) and filename is not None:
         filename = os.path.join(directory, filename)
-        file = open(filename, 'w')
+        file = open(filename, 'a')
         file.write(data)
+        file.close()
+
+
+def write_line_file(line: str, directory: str, filename: str):
+    if os.path.isdir(directory) and filename is not None:
+        filename = os.path.join(directory, filename)
+        file = open(filename, 'a')
+        file.writelines([line, '\n'])
         file.close()
 
 
