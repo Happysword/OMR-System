@@ -1,5 +1,6 @@
 import cv2
 import Binarization as binarization
+from Dictionary import *
 from commonfunctions import *
 from skimage import exposure
 from fix_orientation import fix_orientation
@@ -28,7 +29,7 @@ for filename in filenames:
         # Binarization Step
         binary_image = 255 * binarization.AdaptiveThresholding(fixed_orientation, 3)  # give good results
 
-        # show_images([fixed_orientation, binary_image])
+        show_images([fixed_orientation, binary_image])
 
         # io_utils.write_image(fixed_orientation, args.output_path, filename)
 
@@ -42,22 +43,28 @@ for filename in filenames:
         for i in staffs:
             show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
+        FinalOutput = "{\n"
 
         for staff in staffs:
             Symbols,borders = segment_symbols(staff.notes)
             show_images(Symbols)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            # notePoints, notesNames = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
-            # print(notesNames)
+            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
             #Extract features and predict value
-            string_symbols = ""
-            for symbol in Symbols:
-                features = extract_features(symbol, 'hog') 
+            staffObject = []
+            for i,symbol in enumerate(Symbols):
+                symbolObj = []
+                features = extract_features(symbol, 'all') 
                 value = loaded_model.predict([features])
-                string_symbols = string_symbols + " " + str(value[0])
-            print(string_symbols)
+                symbolObj.append( str(value[0]) )
+                symbolObj.append(borders[i])
+                staffObject.append(symbolObj)
 
+            FinalOutput += TranslateStaff(staffObject,noteObject)
+        
+        FinalOutput += "}"
+        print(FinalOutput)
 
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')

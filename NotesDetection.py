@@ -28,7 +28,10 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
     erosion = cv2.erode(noteImg,kernel,iterations = 1)
     
-    # show_images([erosion])
+    kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05),int(space*0.05))) 
+    erosion = cv2.morphologyEx(erosion, cv2.MORPH_DILATE, kernel2)
+
+    show_images([erosion])
 
     # show_images([thresholdedImg,erosion])
 
@@ -51,50 +54,49 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     hollowPoints = sorted(hollowPoints, key=lambda x: x[0])
     bothNotesPoints = sorted(bothNotesPoints, key=lambda x: x[0])
 
-    allNotes = []
-    i = 0
-    while i < len(bothNotesPoints):
-        note = []
-        note.append(bothNotesPoints[i])
-        for j in range(i+1,len(bothNotesPoints)):
-           if abs( bothNotesPoints[j][0] - bothNotesPoints[i][0]) < space :
-               note.append(bothNotesPoints[j])
-               i = j
-        allNotes.append(note)
-        i +=1 
+    # allNotes = []
+    # i = 0
+    # while i < len(bothNotesPoints):
+    #     note = []
+    #     note.append(bothNotesPoints[i])
+    #     for j in range(i+1,len(bothNotesPoints)):
+    #        if abs( bothNotesPoints[j][0] - bothNotesPoints[i][0]) < space :
+    #            note.append(bothNotesPoints[j])
+    #            i = j
+    #     allNotes.append(note)
+    #     i +=1 
 
-    notesNames = []
-    for group in allNotes:
-        groupName = []
-        for note in group:
-            minimum = min(linesDic, key=lambda x:abs(x-note[1]))
-            if note[2] == 0:
-                groupName.append(linesDic[minimum])
-            else:
-                groupName.append(linesDic[minimum]+"/2")
-        notesNames.append(groupName)
+    notesObj = []
+    for note in bothNotesPoints:
+        pointObj = []
+        minimum = min(linesDic, key=lambda x:abs(x-note[1]))
+        posName = linesDic[minimum]
+        pointObj.append(note[0])
+        pointObj.append(posName)
+        pointObj.append(note[2])
+        notesObj.append(pointObj)
 
     # print(notesNames)
 
-    finalString = ""
+    # finalString = ""
 
-    finalString += "[ "
+    # finalString += "[ "
 
-    for name in notesNames:
-        if len(name) == 1:
-            finalString += name[0] + " "
-        else:
-            finalString += "{ "
-            for i,oneName in enumerate(name):
-                if i == len(name)-1:
-                    finalString += oneName[0]
-                else:    
-                    finalString += oneName[0] + " , "
-            finalString += " } "
+    # for name in notesNames:
+    #     if len(name) == 1:
+    #         finalString += name[0] + " "
+    #     else:
+    #         finalString += "{ "
+    #         for i,oneName in enumerate(name):
+    #             if i == len(name)-1:
+    #                 finalString += oneName[0]
+    #             else:    
+    #                 finalString += oneName[0] + " , "
+    #         finalString += " } "
 
-    finalString += " ]"
+    # finalString += " ]"
 
-    return notePoints,finalString
+    return notesObj
 
 # Retruns dic of [lines y pos - names]
 def _linesNames(linesPos,space):
@@ -120,7 +122,8 @@ def _linesNames(linesPos,space):
 # Returns set of points from countours in image
 def _getPoints(img):
         points = []
-        contours = find_contours(img, 0.8)
+        contours = find_contours(img, 0.8,fully_connected='low')
+        print(len(contours))
         for c in contours:
             xValues = np.round(c[:, 1]).astype(int)
             yValues = np.round(c[:, 0]).astype(int)
