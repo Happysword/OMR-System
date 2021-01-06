@@ -13,7 +13,7 @@ class Staff:
         self.__get_staff_lines()
         #self.__get_staff_notes()
         # self.__get_staff_thickness()
-        #self.__get_staff_positions()
+        self.__get_staff_positions()
 
     def __get_staff_lines(self):
         img = np.uint8(self.image)
@@ -173,36 +173,37 @@ class Staff:
         # self.positions = positions[1:-1:2] - (self.thickness // 2 ) - 1
         lineVotes = np.zeros(self.lines.shape[0])
         for x in range(self.lines.shape[0]):
-            if sum(self.lines[x]) > (self.lines.shape[1] // 2):
+            if sum(self.lines[x]) > (self.lines.shape[1] // 4):
                 lineVotes[x] = 1
 
-        self.thickness = int(sum(lineVotes) // 5)
+        # self.thickness = int(sum(lineVotes) // 5)
 
-        start = 0
-        end = 0
-        for x in range(1, len(lineVotes)):
-            if(lineVotes[x] == 1):
-                start = x
-                break
-        for x in range(len(lineVotes)-1,1,-1):
-            if(lineVotes[x] == 1):
-                end = x+1
-                break
+        # start = 0
+        # end = 0
+        # for x in range(1, len(lineVotes)):
+        #     if(lineVotes[x] == 1):
+        #         start = x
+        #         break
+        # for x in range(len(lineVotes)-1,1,-1):
+        #     if(lineVotes[x] == 1):
+        #         end = x+1
+        #         break
         
-        croppedLine = lineVotes[start:end]
+        # croppedLine = lineVotes[start:end]
 
-        self.space = int((len(croppedLine) - sum(croppedLine)) // 4)
+        # self.space = int((len(croppedLine) - sum(croppedLine)) // 4)
 
         i = 0
         x = 0
         print(self.thickness, self.space)
+
         while x  < len(lineVotes):
             if(lineVotes[x] == 1 and i < 5):
                 self.positions[i] = x + (self.thickness // 2)
                 i+=1
                 x += (self.thickness // 2) + (self.space // 2)
             x += 1
-
+        print(self.positions)
         
         # print(self.positions)
         # print(self.lines[self.positions,100:130])
