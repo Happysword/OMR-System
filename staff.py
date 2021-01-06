@@ -2,6 +2,7 @@ from commonfunctions import *
 import cv2
 import os
 import operator
+
 class Staff:
     def __init__(self,image):
         self.image = image
@@ -97,14 +98,29 @@ class Staff:
                     horizontal[sum(col[:x]):sum(col[:x+1]), i] = 0
 
         self.lines = horizontal
+
+        # min_line_length = np.max(horizontal.shape[1]) // 2
+        # hough_lines = cv2.HoughLinesP(horizontal, 1, (np.pi / 180), horizontal.shape[1] // 4, np.array([]), min_line_length, min_line_length/5)
+        # newLines = np.zeros(horizontal.shape, dtype=np.uint8)
+
+        # for point in hough_lines[:,0,:]:
+        #     newLines[point[1]:point[3]+1, point[0]:point[2]+1] = 1
+
         self.notes = img_inv - self.lines
+        # show_images([newLines , np.abs(self.lines - newLines)])
+        # show_images([self.notes])
+        # diff = np.zeros(self.lines.shape,dtype=np.uint8)
+        # diff[self.lines == 1] = self.lines[self.lines == 1] - newLines[self.lines == 1]
+        # show_images([self.lines, diff])
+        # self.notes += diff
+        # self.lines = newLines
         self.notes *= 255
 
-        # sizey = self.space // 2
-        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (sizey, sizey))
-
-        # self.notes = cv2.erode(self.notes, verticalStructure2)
-        # self.notes = cv2.dilate(self.notes, verticalStructure2)
+        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, Tlen))
+        # self.notes = cv2.morphologyEx(self.notes, cv2.MORPH_OPEN, verticalStructure2,iterations= 2)
+        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 1))
+        # print((self.notes.shape[1]//1000)+2)
+        # self.notes = cv2.morphologyEx(self.notes, cv2.MORPH_CLOSE, verticalStructure2,iterations= (self.notes.shape[1]//1000)+4)
         # show_images([self.lines, self.notes])
 
 
@@ -171,10 +187,14 @@ class Staff:
         # rle_avg = np.int32(np.round(rle.sum(axis = 0) / rle.shape[0]))
         # positions = np.cumsum(rle_avg)
         # self.positions = positions[1:-1:2] - (self.thickness // 2 ) - 1
-        lineVotes = np.zeros(self.lines.shape[0])
+        # lineVotes = np.zeros(self.lines.shape[0])
         for x in range(self.lines.shape[0]):
             if sum(self.lines[x]) > (self.lines.shape[1] // 4):
-                lineVotes[x] = 1
+                # lineVotes[x] = 1
+                self.positions[0] = x
+                break
+        for i in range(1,5):
+            self.positions[i] = self.positions[0] + i*(self.space+self.thickness)
 
         # self.thickness = int(sum(lineVotes) // 5)
 
@@ -197,12 +217,12 @@ class Staff:
         x = 0
         print(self.thickness, self.space)
 
-        while x  < len(lineVotes):
-            if(lineVotes[x] == 1 and i < 5):
-                self.positions[i] = x + (self.thickness // 2)
-                i+=1
-                x += (self.thickness // 2) + (self.space // 2)
-            x += 1
+        # while x  < len(lineVotes):
+        #     if(lineVotes[x] == 1 and i < 5):
+        #         self.positions[i] = x + (self.thickness // 2)
+        #         i+=1
+        #         x += (self.thickness // 2) + (self.space // 2)
+        #     x += 1
         print(self.positions)
         
         # print(self.positions)
