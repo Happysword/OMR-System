@@ -133,10 +133,12 @@ def segment_symbols(img, width = 16, height = 32):
         i +=1
     #Segment every Symbol and Put it as an image in the contours array
     contours_array = []
+    borders = []
     for (i,c) in enumerate(new_sorted_bounding_rect):
         x_min ,x_max,y_min,y_max = new_sorted_bounding_rect[i]
         if x_max-x_min > 10:  #Should find a way to get the size w to neglect
             cropped_contour= img[y_min:y_max, x_min:x_max]
+            borders.append((x_min,x_max))
             contours_array.append(cropped_contour)
 
-    return contours_array
+    return (contours_array,borders)

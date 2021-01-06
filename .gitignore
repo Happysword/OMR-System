@@ -3,3 +3,4 @@ __pycache__/*
 *.pyc
 /digits_dataset
 /Dataset
+/image_processing_dataset

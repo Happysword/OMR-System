@@ -44,7 +44,7 @@ for filename in filenames:
 
 
         for staff in staffs:
-            Symbols = segment_symbols(staff.notes)
+            Symbols,borders = segment_symbols(staff.notes)
             show_images(Symbols)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
