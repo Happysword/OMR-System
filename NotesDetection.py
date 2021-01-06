@@ -14,7 +14,7 @@ from skimage.morphology import binary_erosion, binary_dilation, binary_closing,s
 
 import Binarization as binarization
 
-lineNames = ['c','d','e','f','g','a','b','c2','d2','e2','f2','g2','a2','b2']
+lineNames = ['c1','d1','e1','f1','g1','a1','b1','c2','d2','e2','f2','g2','a2','b2']
 
 # NOTE: Should get rid of cliff to avoid false notes
 # TODO: find a way to detect hollow notes
@@ -28,7 +28,7 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
     erosion = cv2.erode(noteImg,kernel,iterations = 1)
     
-    kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05),int(space*0.05))) 
+    kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05)+3,int(space*0.05)+3)) 
     erosion = cv2.morphologyEx(erosion, cv2.MORPH_DILATE, kernel2)
 
     show_images([erosion])
@@ -123,7 +123,6 @@ def _linesNames(linesPos,space):
 def _getPoints(img):
         points = []
         contours = find_contours(img, 0.8,fully_connected='low')
-        print(len(contours))
         for c in contours:
             xValues = np.round(c[:, 1]).astype(int)
             yValues = np.round(c[:, 0]).astype(int)

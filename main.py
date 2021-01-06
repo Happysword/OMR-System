@@ -63,7 +63,8 @@ for filename in filenames:
 
             FinalOutput += TranslateStaff(staffObject,noteObject)
         
-        FinalOutput += "}"
+        FinalOutput = FinalOutput[:-2]
+        FinalOutput += "\n}"
         print(FinalOutput)
 
         # for (i,symbol) in enumerate(symbols):

@@ -63,6 +63,6 @@ def TranslateStaff(shapeObject,noteObject):
         else:
             FinalOutput += shapesNames[shape[0]] + " "
 
-    FinalOutput += "]\n"
+    FinalOutput += "],\n"
 
     return FinalOutput
