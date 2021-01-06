@@ -15,60 +15,96 @@ from sklearn.model_selection import cross_val_score
 import pickle
 
 
-
 symbol_output_dict = {
 
 }
 
 
-random_seed = 42  
+random_seed = 42
 random.seed(random_seed)
 np.random.seed(random_seed)
-   
+
 
 classifiers = {
-    'SVM': svm.LinearSVC(random_state=random_seed),
+    'SVM': svm.LinearSVC(random_state=random_seed, max_iter=20000,dual=False),
     'KNN': KNeighborsClassifier(n_neighbors=7),
     'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=20, verbose=1)
-    }
+}
+
 
 def ORB_feature(img):
     orb = cv.ORB_create()
     # find the keypoints with ORB
-    kp = orb.detect(img,None)
+    kp = orb.detect(img, None)
     # compute the descriptors with ORB
     kp, des = orb.compute(img, kp)
     # draw only keypoints location,not size and orientation
-    img2 = cv.drawKeypoints(img, kp, None, color=(0,255,0), flags=0)
+    img2 = cv.drawKeypoints(img, kp, None, color=(0, 255, 0), flags=0)
     plt.imshow(img2), plt.show()
 
-def extract_hog_features(img,target_img_size = (32, 32)):
+
+def extract_hog_features(img, target_img_size=(32, 32)):
 
     img = cv2.resize(img, target_img_size)
     win_size = (32, 32)
     cell_size = (4, 4)
     block_size_in_cells = (2, 2)
-    
-    block_size = (block_size_in_cells[1] * cell_size[1], block_size_in_cells[0] * cell_size[0])
+
+    block_size = (block_size_in_cells[1] * cell_size[1],
+                  block_size_in_cells[0] * cell_size[0])
     block_stride = (cell_size[1], cell_size[0])
     nbins = 9  # Number of orientation bins
-    hog = cv2.HOGDescriptor(win_size, block_size, block_stride, cell_size, nbins)
+    hog = cv2.HOGDescriptor(win_size, block_size,
+                            block_stride, cell_size, nbins)
     h = hog.compute(img)
     h = h.flatten()
     return h.flatten()
 
+
+def extract_hist_features(img, histmode='hist', target_img_size=(32, 32)):
+
+    if(len(img.shape)==3):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.resize(img, target_img_size)
+    img = img > 127
+    hist_hor = np.sum(img, axis=0)
+    hist_ver = np.sum(img, axis=1)
+    if histmode == 'vhist':
+        return hist_ver
+    if histmode == 'hhist':
+        return hist_ver
+    if histmode == 'hist' or histmode == 'all':
+        return np.concatenate((hist_ver, hist_hor))
+
+
 def extract_features(img, feature_set='hog'):
+
     if feature_set == 'hog':
         hog = extract_hog_features(img)
-        aspectRatio = img.shape[0] / img.shape[1] 
-        allFeature = np.append(hog,aspectRatio)
+        aspectRatio = img.shape[0] / img.shape[1]
+        hog = np.append(hog, aspectRatio)
+        return hog
+
+    elif feature_set == 'hist' or feature_set == 'vhist' or feature_set == 'hhist':
+        hog = extract_hog_features(img)
+        aspectRatio = img.shape[0] / img.shape[1]
+        histfeatures = extract_hist_features(img, feature_set)
+        hog = np.append(hog, aspectRatio)
+        return histfeatures
+
+    elif feature_set == 'all':
+        hog = extract_hog_features(img)
+        aspectRatio = img.shape[0] / img.shape[1]
+        histfeatures = extract_hist_features(img, feature_set)
+        hog = np.append(hog, aspectRatio)
+        allFeature = np.concatenate((hog, histfeatures))
         return allFeature
 
 
-def load_dataset(path_to_dataset,feature_set='hog'):
+def load_dataset(path_to_dataset, feature_set='hog'):
     features = []
     labels = []
-    path_to_dataset = os.path.join(os.getcwd(),path_to_dataset)
+    path_to_dataset = os.path.join(os.getcwd(), path_to_dataset)
     directoriesNames = os.listdir(path_to_dataset)
     print(directoriesNames)
     for directory in directoriesNames:
@@ -78,40 +114,38 @@ def load_dataset(path_to_dataset,feature_set='hog'):
 
             labels.append(directory)
 
-
-            path = os.path.join(path_to_dataset ,directory, fn)
+            path = os.path.join(path_to_dataset, directory, fn)
             img = cv2.imread(path)
             features.append(extract_features(img, feature_set))
-            
+
             # show an update every 1,000 images
             if i > 0 and i % 500 == 0:
                 print("[INFO] processed {}/{}".format(i, len(img_filenames)))
-            
-    return features, labels        
+
+    return features, labels
+
 
 def train_classifier(path_to_dataset, feature_set):
-   
+
     # Load dataset with extracted features
     print('Loading dataset. This will take time ...')
     features, labels = load_dataset(path_to_dataset, feature_set)
     print('Finished loading dataset.')
 
     # Since we don't want to know the performance of our classifier on images it has seen before
-    # we are going to withhold some images that we will test the classifier on after training 
+    # we are going to withhold some images that we will test the classifier on after training
     train_features, test_features, train_labels, test_labels = train_test_split(
-        features, labels, test_size=0.2, random_state=random_seed,stratify=labels,shuffle=True)
-    
+        features, labels, test_size=0.2, random_state=random_seed, stratify=labels, shuffle=True)
+
     print('############## Training', " SVM ", "##############")
     # Train the model only on the training features
     model = classifiers['SVM']
     model.fit(train_features, train_labels)
-    
+
     # Test the model on images it hasn't seen before
     accuracy = model.score(test_features, test_labels)
-    
-    print("SVM ", 'accuracy:', accuracy*100, '%')
-    
 
+    print("SVM ", 'accuracy:', accuracy*100, '%')
 
     #################################################
 
@@ -122,11 +156,11 @@ def train_classifier(path_to_dataset, feature_set):
     # Y_test = []
     # train_features2, test_features2, train_labels2, test_labels2 = train_test_split(
     #     features, labels, test_size=9, random_state=random_seed,stratify=labels,shuffle=True)
-    
+
     # for i in range(5,101,5):
     #     X.append(i)
     #     model.fit(train_features[0:int(0.01*i*len(train_features))], train_labels[0:int(0.01*i*len(train_labels))])
-        
+
     #     accuracy = model.score(test_features[0:int(0.01*i*len(test_features))], test_labels[0:int(0.01*i*len(test_labels))])
     #     Y_train.append(accuracy)
     #     print("SVM ", 'accuracy:', accuracy*100, '%')
@@ -139,10 +173,9 @@ def train_classifier(path_to_dataset, feature_set):
     # plt.show()
 
 
-
 def main():
-    #Testing the function
-    train_classifier("Dataset",'hog')
+    # Testing the function
+    train_classifier("Dataset", 'hog')
     classifier = classifiers['SVM']
     # save the model to disk
     filename = 'Model.sav'
@@ -157,6 +190,7 @@ def main():
     #     value = classifier.predict([features])
     #     print(value)
 
+
 if __name__ == "__main__":
-   # stuff only to run when not called via 'import' here
-   main()
+    # stuff only to run when not called via 'import' here
+    main()
