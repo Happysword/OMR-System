@@ -50,7 +50,7 @@ for filename in filenames:
             show_images(Symbols)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes)
+            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes,staff.thickness)
             #Extract features and predict value
             staffObject = []
             for i,symbol in enumerate(Symbols):
@@ -65,8 +65,8 @@ for filename in filenames:
         
         FinalOutput = FinalOutput[:-2]
         FinalOutput += "\n}"
+        FinalOutput = FixSpecialShapes(FinalOutput)
         print(FinalOutput)
-
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
 

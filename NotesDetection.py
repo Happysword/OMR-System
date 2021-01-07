@@ -16,11 +16,8 @@ import Binarization as binarization
 
 lineNames = ['c1','d1','e1','f1','g1','a1','b1','c2','d2','e2','f2','g2','a2','b2']
 
-# NOTE: Should get rid of cliff to avoid false notes
-# TODO: find a way to detect hollow notes
-
 # Returns the coordinates of note and array of the note names
-def NotesPositions(thresholdedImg,linesPos,space,noteImg):
+def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
     # invertedImg = 255 - thresholdedImg
     # invertedImg = np.uint8(invertedImg)
 
@@ -31,9 +28,9 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05)+3,int(space*0.05)+3)) 
     erosion = cv2.morphologyEx(erosion, cv2.MORPH_DILATE, kernel2)
 
-    show_images([erosion])
+    # show_images([erosion])
 
-    # show_images([thresholdedImg,erosion])
+    show_images([thresholdedImg,erosion])
 
     hollowPoints = _getHollowPoints(noteImg,space)
     notePoints = _getPoints(erosion)
@@ -48,7 +45,7 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     bothNotesPoints = notePoints + hollowPoints
 
     linesDic = dict()
-    linesDic = _linesNames(linesPos,space)
+    linesDic = _linesNames(linesPos,space,thickness)
 
     notePoints = sorted(notePoints, key=lambda x: x[0])
     hollowPoints = sorted(hollowPoints, key=lambda x: x[0])
@@ -99,7 +96,7 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg):
     return notesObj
 
 # Retruns dic of [lines y pos - names]
-def _linesNames(linesPos,space):
+def _linesNames(linesPos,space,thickness):
     linesPos = list(linesPos)
     linesPos = sorted(linesPos,reverse=True)
     
@@ -114,7 +111,7 @@ def _linesNames(linesPos,space):
     i = 0
     for pos in linesPos:
         linesDic[pos] = lineNames[i]
-        linesDic[int(pos - (space/2))] = lineNames[i+1]
+        linesDic[int(pos - ((space+thickness)/2))] = lineNames[i+1]
         i+=2
     return linesDic
 
@@ -123,6 +120,7 @@ def _linesNames(linesPos,space):
 def _getPoints(img):
         points = []
         contours = find_contours(img, 0.8,fully_connected='low')
+        # print("Number of Solid points detected = " + str(len(contours)))
         for c in contours:
             xValues = np.round(c[:, 1]).astype(int)
             yValues = np.round(c[:, 0]).astype(int)

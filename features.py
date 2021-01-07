@@ -175,7 +175,7 @@ def train_classifier(path_to_dataset, feature_set):
 
 def main():
     # Testing the function
-    train_classifier("Dataset", 'hog')
+    train_classifier("Dataset", 'all')
     classifier = classifiers['SVM']
     # save the model to disk
     filename = 'Model.sav'
