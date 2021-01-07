@@ -8,7 +8,7 @@ class Staff:
         self.image = image
         self.thickness = 0
         self.space = 0
-        self.positions = np.zeros(5, dtype=np.int16)
+        self.positions = np.zeros(7, dtype=np.int16)
         self.lines = np.zeros(self.image.shape, dtype=np.uint8)
         self.notes = np.zeros(self.image.shape, dtype=np.uint8)
         self.__get_staff_lines()
@@ -191,11 +191,13 @@ class Staff:
         for x in range(self.lines.shape[0]):
             if sum(self.lines[x]) > (self.lines.shape[1] // 4):
                 # lineVotes[x] = 1
-                self.positions[0] = x
+                self.positions[1] = x + self.thickness // 2
                 break
-        for i in range(1,5):
-            self.positions[i] = self.positions[0] + i*(self.space+self.thickness)
+        for i in range(2,6):
+            self.positions[i] = self.positions[1] + (i-1)*(self.space+self.thickness)
 
+        self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
+        self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
         # self.thickness = int(sum(lineVotes) // 5)
 
         # start = 0
@@ -215,7 +217,7 @@ class Staff:
 
         i = 0
         x = 0
-        print(self.thickness, self.space)
+        # print(self.thickness, self.space)
 
         # while x  < len(lineVotes):
         #     if(lineVotes[x] == 1 and i < 5):

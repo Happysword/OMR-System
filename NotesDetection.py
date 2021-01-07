@@ -103,11 +103,11 @@ def _linesNames(linesPos,space):
     linesPos = list(linesPos)
     linesPos = sorted(linesPos,reverse=True)
     
-    lowerExtraLine = linesPos[0] + space
-    upperExtraLine = linesPos[-1] - space
+    # lowerExtraLine = linesPos[0] + space
+    # upperExtraLine = linesPos[-1] - space
 
-    linesPos.insert(0,lowerExtraLine)
-    linesPos.append(upperExtraLine)
+    # linesPos.insert(0,lowerExtraLine)
+    # linesPos.append(upperExtraLine)
 
     linesDic = dict()
 
