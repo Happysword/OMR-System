@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 import pickle
-
+import math
 
 symbol_output_dict = {
 
@@ -76,6 +76,18 @@ def extract_hist_features(img, histmode='hist', target_img_size=(32, 32)):
     if histmode == 'hist' or histmode == 'all':
         return np.concatenate((hist_ver, hist_hor))
 
+def extract_huMoments_features(img, target_img_size = (32,32)):
+    
+    if(len(img.shape)==3):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.resize(img, target_img_size)
+    _,img = cv2.threshold(img, 128, 255, cv2.THRESH_BINARY)
+    features = cv.moments(img)
+    hufeats = cv.HuMoments(features)
+    for i in range(0,7):
+        if hufeats[i] != 0:
+            hufeats[i] = -1* math.copysign(1.0, hufeats[i]) * math.log10(abs(hufeats[i]))
+    return hufeats.flatten()
 
 def extract_features(img, feature_set='hog'):
 
@@ -86,18 +98,19 @@ def extract_features(img, feature_set='hog'):
         return hog
 
     elif feature_set == 'hist' or feature_set == 'vhist' or feature_set == 'hhist':
-        hog = extract_hog_features(img)
-        aspectRatio = img.shape[0] / img.shape[1]
-        histfeatures = extract_hist_features(img, feature_set)
-        hog = np.append(hog, aspectRatio)
-        return histfeatures
+        return extract_hist_features(img, feature_set)
+
+    elif feature_set == 'moments':
+        return extract_huMoments_features(img)
 
     elif feature_set == 'all':
         hog = extract_hog_features(img)
         aspectRatio = img.shape[0] / img.shape[1]
-        histfeatures = extract_hist_features(img, feature_set)
         hog = np.append(hog, aspectRatio)
+        histfeatures = extract_hist_features(img, feature_set)
         allFeature = np.concatenate((hog, histfeatures))
+        moments = extract_huMoments_features(img)
+        allFeature = np.concatenate((allFeature,moments))
         return allFeature
 
 
@@ -175,7 +188,7 @@ def train_classifier(path_to_dataset, feature_set):
 
 def main():
     # Testing the function
-    train_classifier("Dataset", 'hog')
+    train_classifier("Dataset", 'moments')
     classifier = classifiers['SVM']
     # save the model to disk
     filename = 'Model.sav'
@@ -194,3 +207,16 @@ def main():
 if __name__ == "__main__":
     # stuff only to run when not called via 'import' here
     main()
+    # img = cv.imread("Images/music2.png",cv.IMREAD_GRAYSCALE)
+    # ret,thresh = cv2.threshold(img,127,255,0)
+    # contours,hierarchy = cv2.findContours(thresh, 1, 2)
+
+    # cnt = contours[0]
+
+    # rect = cv2.minAreaRect(cnt)
+    # box = cv2.boxPoints(rect)
+    # box = np.int0(box)
+    # img = cv2.drawContours(thresh,[box],0,(0,0,255),2)
+    # cv.imshow("hey",img)
+    # cv.waitKey(0)
+    # print(box)
