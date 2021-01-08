@@ -45,21 +45,25 @@ jobs:
         tests=(`find ./students-work/9999/SEM-04/PublicTestCases -type f -iname "*.txt" 2> /dev/null`) 
         cp "${tests[@]}" ./output-correct/
         
+        base_dir=`pwd`
+        echo $base_dir
         cd ./output-correct/
         files=(*.txt)
-        cd ..
         
+        echo "_____________________________________________________________________"
         for filename in "${files[@]}"; do
-            if [ ! -f "$PWD/output/SEM04/$filename" ] ; then
+            if [ ! -f "$base_dir/output/SEM04/$filename" ] ; then
                 echo "$filename NOT FOUND IN OUR OUTPUT"
-                touch "$PWD/output/SEM04/$filename"
+                sudo touch "$base_dir/output/SEM04/$filename"
             fi
-            python ./students-work/9999/SEM-04/TestGrader.py "$PWD/output-correct/$filename" "$PWD/output/SEM04/$filename"
+            
+            sudo python "$base_dir/students-work/9999/SEM-04/TestGrader.py" "$base_dir/output-correct/$filename" "$base_dir/output/SEM04/$filename"
             echo "_____________________________________________________________________"
         done
 
     - name: Upload test cases output
       uses: actions/upload-artifact@v2
+      if: always()
       with:
         name: test_cases_output
         path: ./output/SEM04/*
