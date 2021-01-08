@@ -40,17 +40,17 @@ def TranslateStaff(shapeObject, noteObject):
     for shape in shapeObject:
 
         # TODO : split notesWithHeads into solid and hollow to avoid taking wrong points
-        # TODO : if not found a point make random postiion
+        # TODO : if not found a point make random position
         if shape[0] in notesWithHeads:
             x_min = shape[1][0]
             x_max = shape[1][1]
 
             for note in noteObject:
-                if note[0] >= x_min and note[0] <= x_max:
+                if x_min <= note[0] <= x_max:
                     FinalOutput += note[1] + shapesNames[shape[0]] + " "
 
         elif shape[0] == "dot":
-            FinalOutput += shapesNames[shape[0]]
+            FinalOutput = FinalOutput.strip() + shapesNames[shape[0]] + " "
 
         elif shape[0] == "chord":
             x_min = shape[1][0]
@@ -62,7 +62,7 @@ def TranslateStaff(shapeObject, noteObject):
                     chordArr.append(note[1])
 
             chordArr = sorted(chordArr)
-            
+
             FinalOutput += "{"
             for chord in chordArr:
                 FinalOutput += chord + ","
