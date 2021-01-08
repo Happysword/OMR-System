@@ -74,7 +74,7 @@ for filename in filenames:
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
 
     except:
-        print("____________________________________________________________", flush=True)
-        print("[Error occurred in file]:", filename)
-        traceback.print_exc()
-        pass
+        print("____________________________________________________________")
+        print("[Error]: Occurred in file", filename)
+        print(traceback.format_exc())
+        print("____________________________________________________________")
