@@ -70,7 +70,9 @@ for filename in filenames:
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
 
-
+        text_file = open("Output.txt", "w")
+        text_file.write(FinalOutput)
+        text_file.close()
 
     except Exception as e:
         print(e)
