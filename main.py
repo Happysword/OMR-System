@@ -10,6 +10,7 @@ from NotesDetection import *
 import io_utils
 from features import extract_features
 import pickle as pickle
+import traceback
 
 args = io_utils.get_command_line_args()
 
@@ -70,6 +71,8 @@ for filename in filenames:
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
 
-    except Exception as e:
-        print(e)
+    except:
+        print("____________________________________________________________", flush=True)
+        print("[Error occurred in file]:", filename)
+        traceback.print_exc()
         pass
