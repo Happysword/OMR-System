@@ -56,10 +56,17 @@ def TranslateStaff(shapeObject, noteObject):
             x_min = shape[1][0]
             x_max = shape[1][1]
 
-            FinalOutput += "{"
+            chordArr = []
             for note in noteObject:
                 if x_min <= note[0] <= x_max:
-                    FinalOutput += note[1] + ","
+                    chordArr.append(note[1])
+
+            chordArr = sorted(chordArr)
+            
+            FinalOutput += "{"
+            for chord in chordArr:
+                FinalOutput += chord + ","
+
             FinalOutput = FinalOutput[:-1]
             FinalOutput += "} "
 
