@@ -50,11 +50,11 @@ jobs:
         cd ..
         
         for filename in "${files[@]}"; do
-            if [ ! -f "$PWD/output/$filename" ] ; then
+            if [ ! -f "$PWD/output/SEM04/$filename" ] ; then
                 echo "$filename NOT FOUND IN OUR OUTPUT"
-                touch "$PWD/output/$filename"
+                touch "$PWD/output/SEM04/$filename"
             fi
-            python ./students-work/9999/SEM-04/TestGrader.py "$PWD/output-correct/$filename" "$PWD/output/$filename"
+            python ./students-work/9999/SEM-04/TestGrader.py "$PWD/output-correct/$filename" "$PWD/output/SEM04/$filename"
             echo "_____________________________________________________________________"
         done
 
@@ -62,4 +62,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: test_cases_output
-        path: ./output/*
+        path: ./output/SEM04/*
