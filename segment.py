@@ -1,7 +1,6 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
-from commonfunctions import show_images
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 
@@ -15,7 +14,7 @@ def segment_staff(img):
     
     struct_element = cv.getStructuringElement(cv.MORPH_RECT,(80,6)) #Should check for better structuring elements
     dilated_img = cv.dilate(inverted_img,struct_element,iterations=5)
-    # show_images([dilated_img]) #print dilated image
+    # debug_show_images([dilated_img]) #print dilated image
 
     #Calculate the Horizontal histogram 
     hist_hor = np.sum(dilated_img,axis=1)

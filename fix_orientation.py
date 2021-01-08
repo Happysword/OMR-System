@@ -2,21 +2,18 @@ import numpy as np
 import cv2
 import math
 import Binarization
-
-__DEBUG__ = False
+from debug_utils import *
 
 
 # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
-    global __DEBUG__
-    __DEBUG__ = debug
+def fix_orientation(original_image: np.ndarray) -> np.ndarray:
     is_binary_image = __is_binary_image(original_image)
 
     img = Binarization.AdaptiveThresholding(original_image.copy(), method=3)
     if img.dtype == np.bool:
         img = img.astype(np.uint8) * 255
 
-    __debug_show_image(img)
+    debug_imshow(img)
 
     img = cv2.bitwise_not(img)
     img = remove_noise(img)
@@ -24,7 +21,7 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     img = img[top:bottom, left:right]
     original_image = original_image[top:bottom, left:right]
 
-    __debug_show_image(img)
+    debug_imshow(img)
 
     angle_hough = __get_rotation_angle_hough(img)
 
@@ -34,27 +31,26 @@ def fix_orientation(original_image: np.ndarray, debug=False) -> np.ndarray:
     angle = (abs(__get_rotation_angle(img)) + abs(angle_hough)) / 2
     angle = -angle if (angle_hough < 0) else angle
 
-    if __DEBUG__:
-        print(angle)
+    debug_print(angle)
 
     average_color = __get_average_color(original_image)
-    print("dom", average_color)
+    debug_print("average color: ", average_color)
     img_rotated = __rotate_image(img, angle)
     original_img_rotated = __rotate_image(original_image, angle, average_color)
-    __debug_show_image(original_img_rotated)
+    debug_imshow(original_img_rotated)
 
     top, bottom, left, right = __get_cropping_rectangle(img_rotated)
     img_rotated = img_rotated[top:bottom, left:right]
     original_img_rotated = original_img_rotated[top:bottom, left:right]
     (height, width) = img_rotated.shape
-    __debug_show_image(original_img_rotated)
+    debug_imshow(original_img_rotated)
 
     transformation_matrix = __get_perspective_transformation_matrix(img_rotated)
     img_perspective = cv2.warpPerspective(original_img_rotated, transformation_matrix, (width, height),
                                           flags=cv2.WARP_FILL_OUTLIERS, borderMode=cv2.BORDER_CONSTANT,
                                           borderValue=average_color)
 
-    __debug_show_image(img_perspective)
+    debug_imshow(img_perspective)
 
     return img_perspective
 
@@ -64,7 +60,7 @@ def remove_noise(binary_image: np.ndarray) -> np.ndarray:
     filter_size = filter_size + 1 if (filter_size % 2 == 0) else filter_size
 
     img = cv2.dilate(binary_image, (filter_size, filter_size), iterations=15)
-    __debug_show_image(img)
+    debug_imshow(img)
     n, img = cv2.connectedComponents(img, connectivity=8, ltype=cv2.CV_16U)
 
     unique, count = np.unique(img, return_counts=True)
@@ -93,12 +89,6 @@ def __is_binary_image(img: np.ndarray) -> bool:
 
 def __get_average_color(img: np.ndarray):
     return np.mean(img)
-
-
-def __debug_show_image(img):
-    if __DEBUG__:
-        cv2.imshow("DEBUG", img)
-        cv2.waitKey()
 
 
 def __rotate_image(img: np.ndarray, angle_in_degrees, interpolation_color=0) -> np.ndarray:
@@ -224,7 +214,7 @@ def __get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     bounding_lines = __get_bounding_lines(hull_points)
     # debug_image = img.copy() // 4
     # cv2.drawContours(debug_image, np.int32(bounding_lines), -1, (160, 0, 0), 2)
-    # __debug_show_image(debug_image)
+    # debug_show_image(debug_image)
 
     if bounding_lines.shape[0] < 4:
         return np.eye(3)
@@ -238,7 +228,7 @@ def __get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
         return np.eye(3)
 
     # cv2.drawContours(debug_image, bounding_points.reshape((4, 1, 2)).astype(int), -1, (255, 0, 0), 10)
-    # __debug_show_image(debug_image)
+    # debug_show_image(debug_image)
 
     x, y, w, h = cv2.boundingRect(bounding_points)
     rectangle_points = np.float32([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])

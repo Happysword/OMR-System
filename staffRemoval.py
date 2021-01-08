@@ -1,6 +1,8 @@
-from commonfunctions import *
+from debug_utils import *
 import cv2
 import os
+import skimage.io as io
+
 img = io.imread('./images/note.png', as_gray=True)
 img = img >0.95
 
@@ -9,7 +11,7 @@ remove = img.shape[0] - img.sum(axis = 0)
 
 img2 = np.copy(img)
 img2[:,(remove < 11)] = 1
-# show_images([img, img2])
+# debug_show_images([img, img2])
 
 
 
@@ -34,15 +36,15 @@ for i in range(img.shape[1]):
         if rle[i][j] < 4:
             s = sum(rle[i][:j+1])
             img3[s - rle[i][j] - 1:s, i] = True
-# show_images([img, img3])
+# debug_show_images([img, img3])
 
 
 img = cv2.imread('Images/music1.png',cv2.IMREAD_GRAYSCALE)
 img_inv = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 8)
-# print(img_inv)
+# debug_print(img_inv)
 img_inv = 1 - (img_inv // 255)
 # img_inv = 1-img
-# show_images([img_inv])
+# debug_show_images([img_inv])
 
 horizontal = np.uint8(np.copy(img_inv))
 vertical = np.uint8(np.copy(img_inv))
@@ -71,7 +73,7 @@ verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
 vertical = cv2.erode(vertical, verticalStructure)
 vertical = cv2.dilate(vertical, verticalStructure)
 
-show_images([img_inv, horizontal, vertical],["Original","Staff lines","Symbols"])
+debug_show_images([img_inv, horizontal, vertical],["Original","Staff lines","Symbols"])
 
 #Enhance Output (NOT WORKING WELL)
 '''
@@ -87,11 +89,11 @@ final = np.copy(vertical)
 # Step 1
 # edges = cv2.adaptiveThreshold(vertical, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, -2)
 edges = cv2.Canny(vertical,0.8,0.2)
-show_images([edges])
+debug_show_images([edges])
 # Step 2
 kernel = np.ones((2, 2), np.uint8)
 edges = cv2.dilate(edges, kernel)
-show_images([edges])
+debug_show_images([edges])
 # Step 3
 smooth = np.copy(vertical)
 # Step 4
@@ -100,4 +102,4 @@ smooth = cv2.blur(smooth, (2, 2))
 (rows, cols) = np.where(edges != 0)
 vertical[rows, cols] = smooth[rows, cols]
 # Show final result
-show_images([final, vertical],["Before Enhancement","After Enhancement"])
+debug_show_images([final, vertical],["Before Enhancement","After Enhancement"])

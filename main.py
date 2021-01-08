@@ -1,7 +1,7 @@
 import cv2
 import Binarization as binarization
 from Dictionary import *
-from commonfunctions import *
+from debug_utils import *
 from skimage import exposure
 from fix_orientation import fix_orientation
 from staff import *
@@ -12,7 +12,6 @@ from features import extract_features
 import pickle as pickle
 
 args = io_utils.get_command_line_args()
-__DEBUG__ = args.debug
 
 # load the model from disk
 loaded_model = pickle.load(open('Model.sav', 'rb'))
@@ -24,32 +23,32 @@ for filename in filenames:
         originalImage = io_utils.read_grayscale_image(args.input_path, filename)
 
         # Fixing Orientation Step (Fixing Rotation and Perspective and Crop)
-        fixed_orientation = fix_orientation(originalImage, __DEBUG__)
+        fixed_orientation = fix_orientation(originalImage)
 
         # Binarization Step
         binary_image = 255 * binarization.AdaptiveThresholding(fixed_orientation, 3)  # give good results
 
-        show_images([fixed_orientation, binary_image])
+        debug_show_images([fixed_orientation, binary_image])
 
         # io_utils.write_image(fixed_orientation, args.output_path, filename)
 
         segmented_staffs_array = segment_staff(binary_image)
-        # show_images(segmented_staffs_array)
+        # debug_show_images(segmented_staffs_array)
 
         # # # Getting Staff features
         staffs = []
         for segment in segmented_staffs_array:
             staffs.append(Staff(np.uint8(segment)))
         for i in staffs:
-            show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
+            debug_show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
         io_utils.write_line_file("{", args.output_path, filename)
 
         for staff_number, staff in enumerate(staffs):
             Symbols, borders = segment_symbols(staff.notes)
-            show_images(Symbols)
-            # print(segment_symbols(staff.notes))
-            # print(staff.positions)
+            debug_show_images(Symbols)
+            # debug_print(segment_symbols(staff.notes))
+            # debug_print(staff.positions)
             noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes, staff.thickness)
             # Extract features and predict value
             staffObject = []

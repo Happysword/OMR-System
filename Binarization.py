@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
+from debug_utils import *
 from skimage.filters import (threshold_otsu, threshold_niblack,
                              threshold_sauvola)
+
 
 def AdaptiveThresholding(img,method=0):
 
@@ -12,7 +14,7 @@ def AdaptiveThresholding(img,method=0):
     if blockSize % 2 == 0:
         blockSize += 1
 
-    print("blockSize " + str(blockSize))
+    debug_print("blockSize " + str(blockSize))
 
     if(method == 0):
         outputImg = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,blockSize,8)

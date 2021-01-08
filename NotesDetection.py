@@ -1,5 +1,5 @@
 import skimage
-from commonfunctions import *
+from debug_utils import *
 import numpy as np
 import os
 import cv2
@@ -28,9 +28,9 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05)+3,int(space*0.05)+3)) 
     erosion = cv2.morphologyEx(erosion, cv2.MORPH_DILATE, kernel2)
 
-    # show_images([erosion])
+    # debug_show_images([erosion])
 
-    show_images([thresholdedImg,erosion])
+    debug_show_images([thresholdedImg,erosion])
 
     hollowPoints = _getHollowPoints(noteImg,space)
     notePoints = _getPoints(erosion)
@@ -73,7 +73,7 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
         pointObj.append(note[2])
         notesObj.append(pointObj)
 
-    # print(notesNames)
+    # debug_print(notesNames)
 
     # finalString = ""
 
@@ -120,7 +120,7 @@ def _linesNames(linesPos,space,thickness):
 def _getPoints(img):
         points = []
         contours = find_contours(img, 0.8,fully_connected='low')
-        # print("Number of Solid points detected = " + str(len(contours)))
+        # debug_print("Number of Solid points detected = " + str(len(contours)))
         for c in contours:
             xValues = np.round(c[:, 1]).astype(int)
             yValues = np.round(c[:, 0]).astype(int)
@@ -161,7 +161,7 @@ def _getHollowPoints(img,space):
 
     openinginvertedFlood = cv2.morphologyEx(openinginvertedFlood, cv2.MORPH_OPEN, kernelelipse)
 
-    # show_images([openinginvertedFlood])
+    # debug_show_images([openinginvertedFlood])
 
     contours = find_contours(openinginvertedFlood, 0.8)
     points = []
@@ -177,11 +177,11 @@ def _getHollowPoints(img,space):
             point.append( mean(yValues) )
             points.append(point)
 
-    # print(points)
+    # debug_print(points)
     return points
 
     # invertedFloodClosed = cv2.morphologyEx(invertedFlood, cv2.MORPH_CLOSE, kernelsq,iterations=2)
-    # show_images([invertedFloodClosed])
+    # debug_show_images([invertedFloodClosed])
 
 
 
