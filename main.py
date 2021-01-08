@@ -43,7 +43,8 @@ for filename in filenames:
         for i in staffs:
             debug_show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
-        io_utils.write_line_file("{", args.output_path, filename)
+        if len(staffs) > 1:
+            io_utils.write_line_file("{", args.output_path, filename)
 
         for staff_number, staff in enumerate(staffs):
             Symbols, borders = segment_symbols(staff.notes)
@@ -66,7 +67,8 @@ for filename in filenames:
                 FinalOutput += " ,"
             io_utils.write_line_file(FixSpecialShapes(FinalOutput), args.output_path, filename)
 
-        io_utils.write_file("}", args.output_path, filename)
+        if len(staffs) > 1:
+            io_utils.write_file("}", args.output_path, filename)
 
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
