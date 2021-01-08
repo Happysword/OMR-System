@@ -52,7 +52,7 @@ class Staff:
                     rle_in.append(count)
                     count = 1
             rle_in.append(count)
-            if len(rle_in) > 9:
+            if len(rle_in) > 8:
                 rle.append(np.array(rle_in))
             rle_total.append(np.array(rle_in))
 
@@ -83,6 +83,7 @@ class Staff:
             height += max(line_freq.items(), key=operator.itemgetter(1))[0]
             space += max(space_freq.items(), key=operator.itemgetter(1))[0]
 
+        print(space, height, len(rle),rle.shape, self.image.shape)
         self.thickness = int(np.round(height / len(rle)))
         self.space = int(np.round(space / len(rle)))
         
@@ -187,17 +188,18 @@ class Staff:
         # rle_avg = np.int32(np.round(rle.sum(axis = 0) / rle.shape[0]))
         # positions = np.cumsum(rle_avg)
         # self.positions = positions[1:-1:2] - (self.thickness // 2 ) - 1
-        # lineVotes = np.zeros(self.lines.shape[0])
+        lineVotes = np.zeros(self.lines.shape[0])
         for x in range(self.lines.shape[0]):
-            if sum(self.lines[x]) > (self.lines.shape[1] // 4):
-                # lineVotes[x] = 1
-                self.positions[1] = x + self.thickness // 2
-                break
-        for i in range(2,6):
-            self.positions[i] = self.positions[1] + (i-1)*(self.space+self.thickness)
+            if sum(self.lines[x]) >= (self.lines.shape[1] // 4):
+                lineVotes[x] = 1
+                # self.positions[1] = x + self.thickness // 2
+                # break
+        # for i in range(2,6):
+            # self.positions[i] = self.positions[1] + (i-1)*(self.space + self.thickness)
 
-        self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
-        self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
+        # self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
+        # self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
+
         # self.thickness = int(sum(lineVotes) // 5)
 
         # start = 0
@@ -215,18 +217,27 @@ class Staff:
 
         # self.space = int((len(croppedLine) - sum(croppedLine)) // 4)
 
-        i = 0
+        i = 1
         x = 0
         # print(self.thickness, self.space)
 
-        # while x  < len(lineVotes):
-        #     if(lineVotes[x] == 1 and i < 5):
-        #         self.positions[i] = x + (self.thickness // 2)
-        #         i+=1
-        #         x += (self.thickness // 2) + (self.space // 2)
-        #     x += 1
-        print(self.positions)
-        
+        while x  < len(lineVotes):
+            if(lineVotes[x] == 1 and i < 6):
+                self.positions[i] = x + (self.thickness // 2)
+                i+=1
+                x += self.space // 2
+            x += 1
+
+        for i in [2,3,4,5]:
+            if(self.positions[i] == 0 or self.positions[i]-self.positions[i-1] > 2*self.space):
+                self.positions[i] = self.positions[i-1] + (self.space+self.thickness)
+
+        self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
+        self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
+
+        # print(self.positions)
+        self.lines[self.positions] = 1
+        # show_images([self.lines])
         # print(self.positions)
         # print(self.lines[self.positions,100:130])
         # self.lines[self.positions,:] = 0
