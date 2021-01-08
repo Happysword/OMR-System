@@ -43,36 +43,33 @@ for filename in filenames:
         for i in staffs:
             show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
-        FinalOutput = "{\n"
+        io_utils.write_line_file("{", args.output_path, filename)
 
-        for staff in staffs:
-            Symbols,borders = segment_symbols(staff.notes)
+        for staff_number, staff in enumerate(staffs):
+            Symbols, borders = segment_symbols(staff.notes)
             show_images(Symbols)
             # print(segment_symbols(staff.notes))
             # print(staff.positions)
-            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes,staff.thickness)
-            #Extract features and predict value
+            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes, staff.thickness)
+            # Extract features and predict value
             staffObject = []
-            for i,symbol in enumerate(Symbols):
+            for i, symbol in enumerate(Symbols):
                 symbolObj = []
-                features = extract_features(symbol, 'all') 
+                features = extract_features(symbol, 'all')
                 value = loaded_model.predict([features])
-                symbolObj.append( str(value[0]) )
+                symbolObj.append(str(value[0]))
                 symbolObj.append(borders[i])
                 staffObject.append(symbolObj)
 
-            FinalOutput += TranslateStaff(staffObject,noteObject)
-        
-        FinalOutput = FinalOutput[:-2]
-        FinalOutput += "\n}"
-        FinalOutput = FixSpecialShapes(FinalOutput)
-        print(FinalOutput)
+            FinalOutput = TranslateStaff(staffObject, noteObject)
+            if staff_number < (len(staffs) - 1):
+                FinalOutput += " ,"
+            io_utils.write_line_file(FixSpecialShapes(FinalOutput), args.output_path, filename)
+
+        io_utils.write_file("}", args.output_path, filename)
+
         # for (i,symbol) in enumerate(symbols):
         #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
-
-        text_file = open("Output.txt", "w")
-        text_file.write(FinalOutput)
-        text_file.close()
 
     except Exception as e:
         print(e)
