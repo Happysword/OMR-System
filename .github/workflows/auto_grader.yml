@@ -39,6 +39,21 @@ jobs:
       run: |
         python ./run-students-docker-STD.py "$PWD/students-work/" "$PWD/input" "$PWD/output" -v 1
 
+    - name : Test Results
+      run : |
+        mkdir output-correct
+        tests=(`find ./students-work/9999/SEM-04/PublicTestCases -type f -iname "*.txt" 2> /dev/null`) 
+        cp "${tests[@]}" ./output-correct/
+        
+        for filename in "$PWD/output-correct/*.txt"; do
+            if [ ! -f "$PWD/output/$filename" ] ; then
+                echo "$filename NOT FOUND IN OUR OUTPUT"
+                touch "$PWD/output/$filename"
+            fi
+            python ./students-work/9999/SEM-04/TestGrader.py "$PWD/output-correct/$filename" "$PWD/output/$filename"
+            echo "_____________________________________________________________________"
+        done
+
     - name: Upload test cases output
       uses: actions/upload-artifact@v2
       with:

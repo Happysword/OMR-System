@@ -1,9 +1,18 @@
-from difflib import SequenceMatcher
+from difflib import SequenceMatcher , ndiff
+import argparse
+import os
 
-truth = open('PublicTestCases-version1.1/test-set-scanned/gt/05.txt', 'r').read()
+args_parser = argparse.ArgumentParser()
+args_parser.add_argument('accurate_path', help="Accurate test file")
+args_parser.add_argument('to_check_path', help="To be checked file")
+args = args_parser.parse_args()
 
-output = open('Output/05.txt', 'r').read()
+accurate = open(args.accurate_path, 'r').read()
+to_check = open(args.to_check_path, 'r').read()
 
-seq = SequenceMatcher(a=truth,b=output)
+seq = SequenceMatcher(a=accurate, b=to_check)
+diff = ndiff(a=open(args.accurate_path, 'r').readlines(), b=open(args.to_check_path, 'r').readlines())
 
-print(str(seq.ratio()*100) + "%")
+print("Testing:", os.path.basename(args.accurate_path))
+print(''.join(diff))
+print(f"Accuracy {seq.ratio() * 100}%")
