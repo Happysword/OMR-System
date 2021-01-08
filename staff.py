@@ -83,7 +83,7 @@ class Staff:
             height += max(line_freq.items(), key=operator.itemgetter(1))[0]
             space += max(space_freq.items(), key=operator.itemgetter(1))[0]
 
-        debug_print(space, height, len(rle),rle.shape, self.image.shape)
+        # debug_print(space, height, len(rle),rle.shape, self.image.shape)
         self.thickness = int(np.round(height / len(rle)))
         self.space = int(np.round(space / len(rle)))
         
@@ -232,10 +232,12 @@ class Staff:
             if(self.positions[i] == 0 or self.positions[i]-self.positions[i-1] > 2*self.space):
                 self.positions[i] = self.positions[i-1] + (self.space+self.thickness)
 
+        self.positions[self.positions < 0] = 0
+        self.positions[self.positions > self.lines.shape[0]-1] = self.lines.shape[0]-1
         self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
         self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
 
-        # debug_print(self.positions)
+        debug_print(self.positions)
         self.lines[self.positions] = 1
         # debug_show_images([self.lines])
         # debug_print(self.positions)
