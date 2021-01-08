@@ -43,6 +43,7 @@ for filename in filenames:
         for i in staffs:
             debug_show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
+        io_utils.clear_text_file(args.output_path, filename)
         if len(staffs) > 1:
             io_utils.write_line_file("{", args.output_path, filename)
 
@@ -97,6 +98,7 @@ for filename in filenames:
             for i in staffs:
                 debug_show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
 
+            io_utils.clear_text_file(args.output_path, filename)
             if len(staffs) > 1:
                 io_utils.write_line_file("{", args.output_path, filename)
 

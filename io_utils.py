@@ -30,6 +30,13 @@ def write_image(img: np.ndarray, directory: str, filename: str):
         cv2.imwrite(filename, img)
 
 
+def clear_text_file(directory: str, filename: str):
+    if os.path.isdir(directory) and filename is not None:
+        filename = convert_extension(filename, "txt")
+        filename = os.path.join(directory, filename)
+        open(filename, 'w').close()
+
+
 def write_file(data: str, directory: str, filename: str):
     if os.path.isdir(directory) and filename is not None:
         filename = convert_extension(filename, "txt")
