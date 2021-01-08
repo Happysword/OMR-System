@@ -45,7 +45,11 @@ jobs:
         tests=(`find ./students-work/9999/SEM-04/PublicTestCases -type f -iname "*.txt" 2> /dev/null`) 
         cp "${tests[@]}" ./output-correct/
         
-        for filename in "$PWD/output-correct/*.txt"; do
+        cd ./output-correct/
+        files=(*.txt)
+        cd ..
+        
+        for filename in "${files[@]}"; do
             if [ ! -f "$PWD/output/$filename" ] ; then
                 echo "$filename NOT FOUND IN OUR OUTPUT"
                 touch "$PWD/output/$filename"
