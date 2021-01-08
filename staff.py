@@ -11,12 +11,10 @@ class Staff:
         self.positions = np.zeros(7, dtype=np.int16)
         self.lines = np.zeros(self.image.shape, dtype=np.uint8)
         self.notes = np.zeros(self.image.shape, dtype=np.uint8)
-        self.__get_staff_lines()
-        #self.__get_staff_notes()
-        # self.__get_staff_thickness()
+        self.__get_staff_specs()
         self.__get_staff_positions()
 
-    def __get_staff_lines(self):
+    def __get_staff_specs(self):
         img = np.uint8(self.image)
 
         if np.max(img) == 255:
@@ -25,20 +23,6 @@ class Staff:
         img_inv = 1 - img
 
         horizontal = np.uint8(np.copy(img_inv))
-        # # Specify size on horizontal axis
-        # cols = horizontal.shape[1]
-        # horizontal_size = int(cols/16)
-
-        # # Create structure element for extracting horizontal lines through morphology operations
-        # horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
-
-        # # Apply morphology operations
-        # horizontal = cv2.erode(horizontal, horizontalStructure)
-        # # debug_show_images([horizontal])
-        # horizontal = cv2.dilate(horizontal, horizontalStructure)
-
-        # self.lines = horizontal
-        # debug_show_images([self.lines])
 
         rle = list()
         rle_total = list()
@@ -83,12 +67,14 @@ class Staff:
             height += max(line_freq.items(), key=operator.itemgetter(1))[0]
             space += max(space_freq.items(), key=operator.itemgetter(1))[0]
 
-        # debug_print(space, height, len(rle),rle.shape, self.image.shape)
-        self.thickness = int(np.round(height / len(rle)))
-        self.space = int(np.round(space / len(rle)))
+        if(len(rle)):
+            self.thickness = int(np.round(height / len(rle)))
+            self.space = int(np.round(space / len(rle)))
+        else:
+            self.thickness = 1
+            self.space = (horizontal.shape[0] // 100) + 2
         
         Tlen = min(2*self.thickness, self.thickness+self.space)
-        # debug_print("Tlen: ", Tlen)
 
         for i, col in enumerate(rle_total):
             start = 0
@@ -99,128 +85,18 @@ class Staff:
                     horizontal[sum(col[:x]):sum(col[:x+1]), i] = 0
 
         self.lines = horizontal
-
-        # min_line_length = np.max(horizontal.shape[1]) // 2
-        # hough_lines = cv2.HoughLinesP(horizontal, 1, (np.pi / 180), horizontal.shape[1] // 4, np.array([]), min_line_length, min_line_length/5)
-        # newLines = np.zeros(horizontal.shape, dtype=np.uint8)
-
-        # for point in hough_lines[:,0,:]:
-        #     newLines[point[1]:point[3]+1, point[0]:point[2]+1] = 1
-
         self.notes = img_inv - self.lines
-        # debug_show_images([newLines , np.abs(self.lines - newLines)])
-        # debug_show_images([self.notes])
-        # diff = np.zeros(self.lines.shape,dtype=np.uint8)
-        # diff[self.lines == 1] = self.lines[self.lines == 1] - newLines[self.lines == 1]
-        # debug_show_images([self.lines, diff])
-        # self.notes += diff
-        # self.lines = newLines
         self.notes *= 255
-
-        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, Tlen))
-        # self.notes = cv2.morphologyEx(self.notes, cv2.MORPH_OPEN, verticalStructure2,iterations= 2)
-        # verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 1))
-        # debug_print((self.notes.shape[1]//1000)+2)
-        # self.notes = cv2.morphologyEx(self.notes, cv2.MORPH_CLOSE, verticalStructure2,iterations= (self.notes.shape[1]//1000)+4)
-        # debug_show_images([self.lines, self.notes])
-
-
-
-
-    def __get_staff_notes(self):
-        img = np.uint8(self.image)
-
-        if np.max(img) == 255:
-            img = img // 255
-        
-        img_inv = 1 - img
-
-        vertical = np.uint8((img_inv - self.lines)*255) 
-
-
-        # Specify size on vertical axis
-        rows = vertical.shape[0]
-        # debug_print(rows)
-        verticalsize = 3
-
-        # Create structure element for extracting vertical lines through morphology operations
-        verticalStructure1 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, verticalsize))
-
-        # Apply morphology operations
-        vertical = cv2.erode(vertical, verticalStructure1)
-        vertical = cv2.dilate(vertical, verticalStructure1)
-
-        verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))
-
-        vertical = cv2.dilate(vertical, verticalStructure2)
-        vertical = cv2.erode(vertical, verticalStructure2)
-
-        # debug_show_images([vertical , img_inv , self.lines],["vertical", "Image","Lines"])
-        self.notes = vertical
-
-
-    # def __get_staff_thickness(self):
-        
-    #     ver_histo = self.lines.sum(axis=0)
-    #     non_zero_histo = ver_histo[ver_histo !=0]
-    
-    #     self.thickness = int(round(sum(non_zero_histo) / (5*len(non_zero_histo))))
-    
+   
     def __get_staff_positions(self):
-        # rle = list()
-        # for y in range(self.lines.shape[1]):
-        #     count = 1
-        #     n = 0
-        #     rle_in = list()
-        #     for x in range(1,self.lines.shape[0]):
-        #         if(self.lines[x][y] == self.lines[x-1][y]):
-        #             count+=1
-        #         else :
-        #             rle_in.append(count)
-        #             count = 1
-        #     rle_in.append(count)
-        #     if len(rle_in) > 9:
-        #         debug_print(np.array(rle_in))
-        #         rle.append(np.array(rle_in))
-        # rle = np.array(rle)
-
-        # # debug_print(rle)
-        # rle_avg = np.int32(np.round(rle.sum(axis = 0) / rle.shape[0]))
-        # positions = np.cumsum(rle_avg)
-        # self.positions = positions[1:-1:2] - (self.thickness // 2 ) - 1
+        
         lineVotes = np.zeros(self.lines.shape[0])
         for x in range(self.lines.shape[0]):
             if sum(self.lines[x]) >= (self.lines.shape[1] // 4):
                 lineVotes[x] = 1
-                # self.positions[1] = x + self.thickness // 2
-                # break
-        # for i in range(2,6):
-            # self.positions[i] = self.positions[1] + (i-1)*(self.space + self.thickness)
-
-        # self.positions[0] = max(self.positions[1] - (self.space+self.thickness), 0)
-        # self.positions[6] = min(self.positions[5] + (self.space+self.thickness), self.lines.shape[0]-1)
-
-        # self.thickness = int(sum(lineVotes) // 5)
-
-        # start = 0
-        # end = 0
-        # for x in range(1, len(lineVotes)):
-        #     if(lineVotes[x] == 1):
-        #         start = x
-        #         break
-        # for x in range(len(lineVotes)-1,1,-1):
-        #     if(lineVotes[x] == 1):
-        #         end = x+1
-        #         break
-        
-        # croppedLine = lineVotes[start:end]
-
-        # self.space = int((len(croppedLine) - sum(croppedLine)) // 4)
-
+                
         i = 1
         x = 0
-        # debug_print(self.thickness, self.space)
-
         while x  < len(lineVotes):
             if(lineVotes[x] == 1 and i < 6):
                 self.positions[i] = x + (self.thickness // 2)
@@ -239,14 +115,3 @@ class Staff:
 
         debug_print(self.positions)
         self.lines[self.positions] = 1
-        # debug_show_images([self.lines])
-        # debug_print(self.positions)
-        # debug_print(self.lines[self.positions,100:130])
-        # self.lines[self.positions,:] = 0
-        # debug_show_images([self.lines])
-        
-        # Space between staff lines
-        # cropped_rle = rle[:,2:-2:2]
-        # spaces = cropped_rle.sum(axis=0) // cropped_rle.shape[0]
-        # self.space = int(round(cropped_rle.sum() / (cropped_rle.shape[0]*4)))
-
