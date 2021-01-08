@@ -32,14 +32,23 @@ def write_image(img: np.ndarray, directory: str, filename: str):
 
 def write_file(data: str, directory: str, filename: str):
     if os.path.isdir(directory) and filename is not None:
+        filename = convert_extension(filename, "txt")
         filename = os.path.join(directory, filename)
         file = open(filename, 'a')
         file.write(data)
         file.close()
 
 
+def convert_extension(filename: str, extension: str) -> str:
+    filename = filename.split('.')[:-1]
+    filename.append(f".{extension}")
+    filename = ''.join(filename)
+    return filename
+
+
 def write_line_file(line: str, directory: str, filename: str):
     if os.path.isdir(directory) and filename is not None:
+        filename = convert_extension(filename, "txt")
         filename = os.path.join(directory, filename)
         file = open(filename, 'a')
         file.writelines([line, '\n'])
