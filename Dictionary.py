@@ -17,21 +17,13 @@ shapesNames = {
     "dot": ".",
     "barline": "",
     "chord": "",
-    "t_2_2": "\meter<\"2/2\">",
-    "t_2_4": "\meter<\"2/4\">",
-    "t_3_4": "\meter<\"3/4\">",
-    "t_3_8": "\meter<\"3/8\">",
     "t_4_4": "\meter<\"4/4\">",
-    "t_6_8": "\meter<\"6/8\">",
-    "t_9_8": "\meter<\"9/8\">",
-    "t_12_8": "\meter<\"12/8\">"
+    "t_4_2": "\meter<\"4/2\">"
 }
 
 notesWithHeads = ["a_4", "a_1", "a_2", "a_8", "b_8", "a_16", "b_16", "a_32", "b_32"]
 specialShapes = ["#", "##", "&&", "&"]
-meters = ["\meter<\"2/2\">", "\meter<\"2/4\">", "\meter<\"3/4\">", "\meter<\"3/8\">", "\meter<\"4/4\">",
-          "\meter<\"6/8\">", "\meter<\"9/8\">", "\meter<\"12/8\">"]
-
+meters = ["\meter<\"4/2\">", "\meter<\"4/4\">"]
 
 # noteObject = [X-pos , The note Name , IsHollow ]
 # shapeObject = [ The shape label , (X_min,X_max) ]
@@ -65,7 +57,7 @@ def TranslateStaff(shapeObject, noteObject):
 
             FinalOutput += "{"
             for chord in chordArr:
-                FinalOutput += chord + ","
+                FinalOutput += chord + "/4" + ","
 
             FinalOutput = FinalOutput[:-1]
             FinalOutput += "} "
