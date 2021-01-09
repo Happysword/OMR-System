@@ -32,64 +32,9 @@ for filename in filenames:
 
         debug_show_images([fixed_orientation, binary_image])
 
-        # io_utils.write_image(fixed_orientation, args.output_path, filename)
-        segmented_staffs_array = segment_staff(binary_image)
-        # debug_show_images(segmented_staffs_array)
-
-        # # # Getting Staff features
-        staffs = []
-        for segment in segmented_staffs_array:
-            staffs.append(Staff(np.uint8(segment)))
-        for i in staffs:
-            debug_show_images([i.lines, i.notes], ["Detected Lines", "Detected notes"])
-
-        io_utils.clear_text_file(args.output_path, filename)
-        if len(staffs) > 1:
-            io_utils.write_line_file("{", args.output_path, filename)
-
-        clefFound = False
-        rotateAgain = False
-        for staff_number, staff in enumerate(staffs):
-            Symbols, borders = segment_symbols(staff.notes)
-            debug_show_images(Symbols)
-            # debug_print(segment_symbols(staff.notes))
-            # debug_print(staff.positions)
-            noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes, staff.thickness)
-            # Extract features and predict value
-            staffObject = []
-            for i, symbol in enumerate(Symbols):
-                symbolObj = []
-                features = extract_features(symbol, 'all')
-                value = loaded_model.predict([features])
-                if value == 'clef':
-                    clefFound = True
-                if clefFound == False and i > (len(Symbols) // 4) + 1:
-                    rotateAgain = True
-                    break
-                symbolObj.append(str(value[0]))
-                symbolObj.append(borders[i])
-                staffObject.append(symbolObj)
-
-            # Try again
-            if rotateAgain:
-                break
-
-            FinalOutput = TranslateStaff(staffObject, noteObject)
-            if staff_number < (len(staffs) - 1):
-                FinalOutput += " ,"
-            io_utils.write_line_file(FixSpecialShapes(FinalOutput), args.output_path, filename)
-
-        ###############################
-        # Rotate 180 then try again
-        ###############################
-        if rotateAgain:
-            # print(type(binary_image[0][0]))
-            binary_image = transform.rotate(binary_image, 180)
-            binary_image = 255 * binarization.AdaptiveThresholding(binary_image, 3)
-
-            debug_show_images([binary_image])
-
+        for trial in range(2):
             segmented_staffs_array = segment_staff(binary_image)
+            # debug_show_images(segmented_staffs_array)
 
             # # # Getting Staff features
             staffs = []
@@ -102,32 +47,46 @@ for filename in filenames:
             if len(staffs) > 1:
                 io_utils.write_line_file("{", args.output_path, filename)
 
+            rotateAgain = False
             for staff_number, staff in enumerate(staffs):
-                Symbols, borders = segment_symbols(staff.notes)
-                debug_show_images(Symbols)
+                symbols, borders = segment_symbols(staff.notes)
+                debug_show_images(symbols)
                 # debug_print(segment_symbols(staff.notes))
                 # debug_print(staff.positions)
                 noteObject = NotesPositions(staff.image, staff.positions, staff.space, staff.notes, staff.thickness)
                 # Extract features and predict value
                 staffObject = []
-                for i, symbol in enumerate(Symbols):
+                for i, symbol in enumerate(symbols):
                     symbolObj = []
                     features = extract_features(symbol, 'all')
                     value = loaded_model.predict([features])
+                    if value == 'clef' and i > (len(symbols) // 4) + 1:
+                        rotateAgain = True
+                        break
                     symbolObj.append(str(value[0]))
                     symbolObj.append(borders[i])
                     staffObject.append(symbolObj)
+
+                # Try again
+                if rotateAgain:
+                    break
 
                 FinalOutput = TranslateStaff(staffObject, noteObject)
                 if staff_number < (len(staffs) - 1):
                     FinalOutput += " ,"
                 io_utils.write_line_file(FixSpecialShapes(FinalOutput), args.output_path, filename)
 
-        if len(staffs) > 1:
-            io_utils.write_file("}", args.output_path, filename)
+            # Rotate 180 then try again
+            if rotateAgain:
+                binary_image = transform.rotate(binary_image, 180)
+                binary_image = 255 * binarization.AdaptiveThresholding(binary_image, 3)
+                continue
 
-        # for (i,symbol) in enumerate(symbols):
-        #     io_utils.write_image(symbol,"NewDataSet",str(i)+'.png')
+            if len(staffs) > 1:
+                io_utils.write_file("}", args.output_path, filename)
+
+            break
+
 
     except:
         print("____________________________________________________________")
