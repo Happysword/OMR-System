@@ -47,6 +47,7 @@ for filename in filenames:
             if len(staffs) > 1:
                 io_utils.write_line_file("{", args.output_path, filename)
 
+            clefFound = False
             rotateAgain = False
             for staff_number, staff in enumerate(staffs):
                 symbols, borders = segment_symbols(staff.notes)
@@ -60,7 +61,9 @@ for filename in filenames:
                     symbolObj = []
                     features = extract_features(symbol, 'all')
                     value = loaded_model.predict([features])
-                    if value == 'clef' and i > (len(symbols) // 4) + 1:
+                    if value == 'clef':
+                        clefFound = True
+                    if not clefFound and i > (len(symbols) // 4) + 1:
                         rotateAgain = True
                         break
                     symbolObj.append(str(value[0]))
