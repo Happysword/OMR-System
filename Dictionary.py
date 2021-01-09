@@ -1,3 +1,5 @@
+import random
+
 shapesNames = {
     "clef": "",
     "a_4": "/4",
@@ -22,6 +24,7 @@ shapesNames = {
 }
 
 notesWithHeads = ["a_4", "a_1", "a_2", "a_8", "b_8", "a_16", "b_16", "a_32", "b_32"]
+notesWithHeadsNames = ['c1','d1','e1','f1','g1','a1','b1','c2','d2','e2','f2','g2','a2','b2']
 specialShapes = ["#", "##", "&&", "&"]
 meters = ["\meter<\"4/2\">", "\meter<\"4/4\">"]
 
@@ -37,9 +40,16 @@ def TranslateStaff(shapeObject, noteObject):
             x_min = shape[1][0]
             x_max = shape[1][1]
 
+            found = False
+
             for note in noteObject:
                 if x_min <= note[0] <= x_max:
+                    found = True
                     FinalOutput += note[1] + shapesNames[shape[0]] + " "
+
+            if not found:
+                index = random.randint(0,len(notesWithHeadsNames)-1)
+                FinalOutput += notesWithHeadsNames[index] + shapesNames[shape[0]] + " "
 
         elif shape[0] == "dot":
             FinalOutput = FinalOutput.strip() + shapesNames[shape[0]] + " "
