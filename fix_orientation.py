@@ -207,14 +207,26 @@ def __any_point_outside_image(img: np.ndarray, points):
     return False
 
 
+def __draw_horizontal_lines(img, lines) -> np.ndarray:
+    img[:, :] = 0
+    for line in lines:
+        for x1, y1, x2, y2 in line:
+            if abs(__get_line_angle(line)) <= 30:
+                cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+    return img
+
+
 def __get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
+    lines = __get_all_hough_lines(img)
+    img = __draw_horizontal_lines(img, lines)
+
     all_points = cv2.findNonZero(img)
     hull_points: np.ndarray = cv2.convexHull(all_points)
 
     bounding_lines = __get_bounding_lines(hull_points)
     # debug_image = img.copy() // 4
     # cv2.drawContours(debug_image, np.int32(bounding_lines), -1, (160, 0, 0), 2)
-    # debug_show_image(debug_image)
+    # debug_imshow(debug_image)
 
     if bounding_lines.shape[0] < 4:
         return np.eye(3)
@@ -233,27 +245,8 @@ def __get_perspective_transformation_matrix(img: np.ndarray) -> np.ndarray:
     x, y, w, h = cv2.boundingRect(bounding_points)
     rectangle_points = np.float32([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
 
-    if are_points_same_skew(bounding_points, rectangle_points, img.shape):
-        return np.eye(3)
-
     transformation_matrix = cv2.getPerspectiveTransform(bounding_points, rectangle_points)
     return transformation_matrix
-
-
-def are_points_same_skew(bounding_points, rectangle_points, img_shape):
-    epsilon_x = math.ceil(1 + img_shape[1] / 100)
-    epsilon_y = math.ceil(1 + img_shape[0] / 100)
-
-    x1, y1, x2, y2, x3, y3, x4, y4 = rectangle_points.flatten()
-    X1, Y1, X2, Y2, X3, Y3, X4, Y4 = bounding_points.flatten()
-
-    if (abs(x1 - X1) <= epsilon_x and abs(x2 - X2) <= epsilon_x
-            and abs(x3 - X3) <= epsilon_x and abs(x4 - X4) <= epsilon_x):
-        return True
-    if (abs(y1 - Y1) <= epsilon_y and abs(y2 - Y2) <= epsilon_y
-            and abs(y3 - Y3) <= epsilon_y and abs(y4 - Y4) <= epsilon_y):
-        return True
-    return False
 
 
 def __get_cropping_rectangle(binary_image: np.ndarray):
@@ -268,11 +261,21 @@ def __get_cropping_rectangle(binary_image: np.ndarray):
     return top, bottom, left, right
 
 
-def __get_hough_lines(binary_image: np.ndarray):
+def __get_long_hough_lines(binary_image: np.ndarray):
     rho = 1  # distance resolution in pixels of the Hough grid
     theta = np.pi / 180  # angular resolution in radians of the Hough grid
     threshold = np.min(binary_image.shape) // 5  # minimum number of votes (intersections in Hough grid cell)
     min_line_length = np.max(binary_image.shape) // 4
+    max_line_gap = min_line_length / 10  # maximum gap in pixels between connectable line segments
+    lines = cv2.HoughLinesP(binary_image, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+    return lines
+
+
+def __get_all_hough_lines(binary_image: np.ndarray):
+    rho = 1  # distance resolution in pixels of the Hough grid
+    theta = np.pi / 180  # angular resolution in radians of the Hough grid
+    threshold = np.min(binary_image.shape) // 20  # minimum number of votes (intersections in Hough grid cell)
+    min_line_length = np.max(binary_image.shape) // 20
     max_line_gap = min_line_length / 10  # maximum gap in pixels between connectable line segments
     lines = cv2.HoughLinesP(binary_image, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
     return lines
@@ -284,7 +287,7 @@ def __reject_outliers(arr: np.ndarray) -> np.ndarray:
 
 
 def __get_rotation_angle_hough(binarized_image: np.ndarray):
-    lines_endpoints = __get_hough_lines(binarized_image)
+    lines_endpoints = __get_long_hough_lines(binarized_image)
 
     data_type = [('length', float), ('angle', float)]
     lines_properties = np.zeros(len(lines_endpoints), dtype=data_type)
