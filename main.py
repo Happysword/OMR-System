@@ -63,7 +63,7 @@ for filename in filenames:
                     value = loaded_model.predict([features])
                     if value == 'clef':
                         clefFound = True
-                    if not clefFound and i > (len(symbols) // 4) + 1:
+                    if trial == 0 and not clefFound and i > (len(symbols) // 4) + 1:
                         rotateAgain = True
                         break
                     symbolObj.append(str(value[0]))
