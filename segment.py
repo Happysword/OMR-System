@@ -142,6 +142,6 @@ def segment_symbols(img, width = 16, height = 32):
 
 
 def __is_bar_line(img: np.ndarray):
-    if cv.countNonZero(img) / img.size >= 0.95 or img.shape[1] <= 10:  # Should find a way to get the size w to neglect
+    if (cv.countNonZero(img) / img.size >= 0.9 and img.shape[0]/img.shape[1] >= 3) or img.shape[1] <= 10:
         return True
     return False
