@@ -133,15 +133,10 @@ def segment_symbols(img, width = 16, height = 32):
     borders = []
     for (i,c) in enumerate(new_sorted_bounding_rect):
         x_min ,x_max,y_min,y_max = new_sorted_bounding_rect[i]
-        cropped_contour = img[y_min:y_max, x_min:x_max]
-        if not __is_bar_line(cropped_contour):
+        if x_max-x_min > 10:  # Should find a way to get the size w to neglect
+            cropped_contour = img[y_min:y_max, x_min:x_max]
             borders.append((x_min,x_max))
             contours_array.append(cropped_contour)
 
     return (contours_array,borders)
 
-
-def __is_bar_line(img: np.ndarray):
-    if (cv.countNonZero(img) / img.size >= 0.9 and img.shape[0]/img.shape[1] >= 3) or img.shape[1] <= 10:
-        return True
-    return False
