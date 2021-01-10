@@ -14,6 +14,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 import pickle
 import math
+import sys
 
 symbol_output_dict = {
 
@@ -160,63 +161,24 @@ def train_classifier(path_to_dataset, feature_set):
 
     print("SVM ", 'accuracy:', accuracy*100, '%')
 
-    #################################################
-
-    # Test for bias and variance
-
-    # X = []
-    # Y_train = []
-    # Y_test = []
-    # train_features2, test_features2, train_labels2, test_labels2 = train_test_split(
-    #     features, labels, test_size=9, random_state=random_seed,stratify=labels,shuffle=True)
-
-    # for i in range(5,101,5):
-    #     X.append(i)
-    #     model.fit(train_features[0:int(0.01*i*len(train_features))], train_labels[0:int(0.01*i*len(train_labels))])
-
-    #     accuracy = model.score(test_features[0:int(0.01*i*len(test_features))], test_labels[0:int(0.01*i*len(test_labels))])
-    #     Y_train.append(accuracy)
-    #     print("SVM ", 'accuracy:', accuracy*100, '%')
-    #     scores = cross_val_score(model, train_features2[0:int(0.01*i*len(features))], train_labels[0:int(0.01*i*len(labels))], cv=5)
-    #     Y_test.append(scores.mean())
-    #     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-
-    # plt.plot(Y_train,color="g")
-    # plt.plot(Y_test,color="r")
-    # plt.show()
 
 
 def main():
     # Testing the function
-    train_classifier("Dataset", 'all')
+
+    if(len(sys.argv) >= 2):
+        data_path = sys.argv[1]
+    else:
+        data_path = "Dataset"
+
+    train_classifier(data_path, 'all')
     classifier = classifiers['SVM']
     # save the model to disk
     filename = 'Model.sav'
     pickle.dump(classifier, open(filename, 'wb'))
 
-    # while True:
-
-    #     test_img_path = input("Enter path: ")
-    #     img = cv2.imread(test_img_path)
-    #     features = extract_features(img, 'hog')  # be careful of the choice of feature set
-
-    #     value = classifier.predict([features])
-    #     print(value)
 
 
 if __name__ == "__main__":
     # stuff only to run when not called via 'import' here
     main()
-    # img = cv.imread("Images/music2.png",cv.IMREAD_GRAYSCALE)
-    # ret,thresh = cv2.threshold(img,127,255,0)
-    # contours,hierarchy = cv2.findContours(thresh, 1, 2)
-
-    # cnt = contours[0]
-
-    # rect = cv2.minAreaRect(cnt)
-    # box = cv2.boxPoints(rect)
-    # box = np.int0(box)
-    # img = cv2.drawContours(thresh,[box],0,(0,0,255),2)
-    # cv.imshow("hey",img)
-    # cv.waitKey(0)
-    # print(box)
