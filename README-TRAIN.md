@@ -4,7 +4,7 @@
 
 # 1. How to train the classifier?
 ## &emsp;1. You have to create a folder of the dataset containing folders for each symbol as each folder name is the label of the symbol.
-### &emsp;&emsp;- You can find our naming convension <a href="https://docs.google.com/spreadsheets/d/1XqSvS_hDt0-i6hHHee-wwU1KsJoMRWFWlnPQF_Axy30/edit?usp=sharing"> *here* </a>.
+### &emsp;&emsp;- You can find our naming convention <a href="https://docs.google.com/spreadsheets/d/1XqSvS_hDt0-i6hHHee-wwU1KsJoMRWFWlnPQF_Axy30/edit?usp=sharing"> *here* </a>.
 ## &emsp;2. Each image should be binarized and inverted (symbols = white, background = black).
 ## &emsp;3. Then run features.py file as follow:
 ``````````````````
