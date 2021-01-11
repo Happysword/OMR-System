@@ -38,6 +38,8 @@ def clear_text_file(directory: str, filename: str):
 
 
 def write_file(data: str, directory: str, filename: str):
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     if os.path.isdir(directory) and filename is not None:
         filename = convert_extension(filename, "txt")
         filename = os.path.join(directory, filename)
@@ -54,6 +56,8 @@ def convert_extension(filename: str, extension: str) -> str:
 
 
 def write_line_file(line: str, directory: str, filename: str):
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     if os.path.isdir(directory) and filename is not None:
         filename = convert_extension(filename, "txt")
         filename = os.path.join(directory, filename)
