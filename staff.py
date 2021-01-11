@@ -14,6 +14,7 @@ class Staff:
         self.__get_staff_specs()
         self.__get_staff_positions()
 
+    # Get staff specifications like thickness, space then extract the music notes from the image (Remove staff lines)
     def __get_staff_specs(self):
         img = np.uint8(self.image)
 
@@ -24,6 +25,8 @@ class Staff:
 
         horizontal = np.uint8(np.copy(img_inv))
 
+        # Calculate Run length of each column then take the most frequently number of white to be line thickness 
+        # and most frequently number of black to be the space between lines
         rle = list()
         rle_total = list()
         for y in range(horizontal.shape[1]):
@@ -76,6 +79,7 @@ class Staff:
         
         Tlen = min(2*self.thickness, self.thickness+self.space)
 
+        # Remove music notes from the original image which results in staff lines image
         for i, col in enumerate(rle_total):
             start = 0
             if horizontal[0][i] == 0:
@@ -85,9 +89,12 @@ class Staff:
                     horizontal[sum(col[:x]):sum(col[:x+1]), i] = 0
 
         self.lines = horizontal
+
+        # Extract music notes by subtracting the staff lines image from the original image
         self.notes = img_inv - self.lines
         self.notes *= 255
    
+    # Get staff lines positions by calculating horizontal histogram and take values greater than (image width / 4)   
     def __get_staff_positions(self):
         
         lineVotes = np.zeros(self.lines.shape[0])

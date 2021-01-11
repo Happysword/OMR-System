@@ -18,8 +18,6 @@ lineNames = ['c1','d1','e1','f1','g1','a1','b1','c2','d2','e2','f2','g2','a2','b
 
 # Returns the coordinates of note and array of the note names
 def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
-    # invertedImg = 255 - thresholdedImg
-    # invertedImg = np.uint8(invertedImg)
 
     # Creating circle SE with size of the note circle
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.9),int(space*0.9)))    
@@ -28,7 +26,6 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.05)+3,int(space*0.05)+3)) 
     erosion = cv2.morphologyEx(erosion, cv2.MORPH_DILATE, kernel2)
 
-    # debug_show_images([erosion])
 
     debug_show_images([thresholdedImg,erosion])
 
@@ -51,18 +48,6 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
     hollowPoints = sorted(hollowPoints, key=lambda x: x[0])
     bothNotesPoints = sorted(bothNotesPoints, key=lambda x: x[0])
 
-    # allNotes = []
-    # i = 0
-    # while i < len(bothNotesPoints):
-    #     note = []
-    #     note.append(bothNotesPoints[i])
-    #     for j in range(i+1,len(bothNotesPoints)):
-    #        if abs( bothNotesPoints[j][0] - bothNotesPoints[i][0]) < space :
-    #            note.append(bothNotesPoints[j])
-    #            i = j
-    #     allNotes.append(note)
-    #     i +=1 
-
     notesObj = []
     for note in bothNotesPoints:
         pointObj = []
@@ -73,25 +58,6 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
         pointObj.append(note[2])
         notesObj.append(pointObj)
 
-    # debug_print(notesNames)
-
-    # finalString = ""
-
-    # finalString += "[ "
-
-    # for name in notesNames:
-    #     if len(name) == 1:
-    #         finalString += name[0] + " "
-    #     else:
-    #         finalString += "{ "
-    #         for i,oneName in enumerate(name):
-    #             if i == len(name)-1:
-    #                 finalString += oneName[0]
-    #             else:    
-    #                 finalString += oneName[0] + " , "
-    #         finalString += " } "
-
-    # finalString += " ]"
 
     return notesObj
 
@@ -99,12 +65,6 @@ def NotesPositions(thresholdedImg,linesPos,space,noteImg,thickness):
 def _linesNames(linesPos,space,thickness):
     linesPos = list(linesPos)
     linesPos = sorted(linesPos,reverse=True)
-    
-    # lowerExtraLine = linesPos[0] + space
-    # upperExtraLine = linesPos[-1] - space
-
-    # linesPos.insert(0,lowerExtraLine)
-    # linesPos.append(upperExtraLine)
 
     linesDic = dict()
 
@@ -120,7 +80,7 @@ def _linesNames(linesPos,space,thickness):
 def _getPoints(img):
         points = []
         contours = find_contours(img, 0.8,fully_connected='low')
-        # debug_print("Number of Solid points detected = " + str(len(contours)))
+
         for c in contours:
             xValues = np.round(c[:, 1]).astype(int)
             yValues = np.round(c[:, 0]).astype(int)
@@ -156,12 +116,9 @@ def _getHollowPoints(img,space):
     openinginvertedFlood = cv2.morphologyEx(invertedFlood, cv2.MORPH_OPEN, kernelsq2)
 
     kernelelipse = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(space*0.8),int(space*0.8)))    
-    # erosion = cv2.erode(invertedFlood,kernel,iterations = 1)
-    # dilation = cv2.erode(erosion,kernel,iterations = 1)
-
+   
     openinginvertedFlood = cv2.morphologyEx(openinginvertedFlood, cv2.MORPH_OPEN, kernelelipse)
 
-    # debug_show_images([openinginvertedFlood])
 
     contours = find_contours(openinginvertedFlood, 0.8)
     points = []
@@ -177,11 +134,9 @@ def _getHollowPoints(img,space):
             point.append( mean(yValues) )
             points.append(point)
 
-    # debug_print(points)
     return points
 
-    # invertedFloodClosed = cv2.morphologyEx(invertedFlood, cv2.MORPH_CLOSE, kernelsq,iterations=2)
-    # debug_show_images([invertedFloodClosed])
+    
 
 
 
