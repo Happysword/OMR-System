@@ -31,7 +31,6 @@ jobs:
     - name : Copy test set into input folder
       run : |
         mkdir input
-        mkdir output
         image_files=(`find ./students-work/9999/SEM-04/PublicTestCases -type f -iname "*.png" -or -iname "*.jpg" -or -iname "*.jpeg" 2> /dev/null`) 
         cp "${image_files[@]}" ./input/
 
