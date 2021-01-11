@@ -69,7 +69,8 @@ def TranslateStaff(shapeObject, noteObject):
             for chord in chordArr:
                 FinalOutput += chord + "/4" + ","
 
-            FinalOutput = FinalOutput[:-1]
+            if len(chordArr) != 0:
+                FinalOutput = FinalOutput[:-1]
             FinalOutput += "} "
 
         else:
